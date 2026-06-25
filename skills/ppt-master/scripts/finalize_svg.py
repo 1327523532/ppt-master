@@ -24,13 +24,16 @@ Examples:
     python3 scripts/finalize_svg.py examples/ppt169_demo --only embed-icons
 
 Processing options:
-    embed-icons   - Replace <use data-icon="..."/> with actual icon SVG
-    align-images  - Align (slice/meet) and Base64-embed all <image> in one pass.
-                    Replaces the former crop-images + fix-aspect + embed-images
-                    trio. The old names remain accepted as aliases for the
-                    merged step, so existing --only invocations keep working.
-    flatten-text  - Convert <tspan> to independent <text> (for special renderers)
-    fix-rounded   - Convert <rect rx="..."/> to <path> (for PPT shape conversion)
+    embed-icons    - Replace <use data-icon="..."/> with actual icon SVG
+    align-images   - Align (slice/meet) and Base64-embed all <image> in one pass.
+                     Replaces the former crop-images + fix-aspect + embed-images
+                     trio. The old names remain accepted as aliases for the
+                     merged step, so existing --only invocations keep working.
+    flatten-text   - Convert <tspan> to independent <text> (for special renderers)
+    fix-rounded    - Convert <rect rx="..."/> to <path> (for PPT shape conversion)
+    page-numbers   - Replace {{PAGE_NUM}} / {{TOTAL_PAGES}} in every SVG with
+                     the 1-based index and total count (alphabetical filename
+                     order). Runs LAST so it works on the final SVG content.
 """
 
 import os
@@ -168,7 +171,7 @@ def finalize_project(
     # Step 2: Embed icons
     if options.get('embed_icons'):
         if not quiet:
-            safe_print("[1/4] Embedding icons...")
+            safe_print("[1/5] Embedding icons...")
         icons_count = 0
         for svg_file in svg_final.glob('*.svg'):
             count = embed_icons_in_file(svg_file, icons_dir, dry_run=False, verbose=False, fallback_dir=icons_fallback_dir)
@@ -187,7 +190,7 @@ def finalize_project(
     # from disk once.
     if options.get('align_images'):
         if not quiet:
-            safe_print("[2/4] Aligning + embedding images...")
+            safe_print("[2/5] Aligning + embedding images...")
         img_count = 0
         img_errors = 0
         office_vector_count = 0
@@ -224,7 +227,7 @@ def finalize_project(
     # Step 4: Flatten text
     if options.get('flatten_text'):
         if not quiet:
-            safe_print("[3/4] Flattening text...")
+            safe_print("[3/5] Flattening text...")
         flatten_count = 0
         for svg_file in svg_final.glob('*.svg'):
             if process_flatten_text(svg_file, verbose=False):
@@ -238,7 +241,7 @@ def finalize_project(
     # Step 5: Convert rounded rects to Path
     if options.get('fix_rounded'):
         if not quiet:
-            safe_print("[4/4] Converting rounded rects to Path...")
+            safe_print("[4/5] Converting rounded rects to Path...")
         rounded_count = 0
         for svg_file in svg_final.glob('*.svg'):
             count = process_rounded_rect(svg_file, verbose=False)
@@ -248,6 +251,29 @@ def finalize_project(
                 safe_print(f"      {rounded_count} rounded rectangle(s) converted")
             else:
                 safe_print("      No rounded rectangles")
+
+    # Step 6: Replace {{PAGE_NUM}} / {{TOTAL_PAGES}} placeholders.
+    # Page order is alphabetical filename order, matching the convention
+    # in pptx_discovery.find_svg_files. Runs LAST so it works on the
+    # SVG content after every other rewrite (embed-icons rewrites
+    # surrounding <use> markup; flatten-text splits <tspan>; fix-rounded
+    # rewrites rect/path; none of them touch the literal {{}} text
+    # tokens, so a plain text replace is sufficient and safe).
+    if options.get('page_numbers'):
+        from svg_finalize.page_numbers import replace_in_file
+        if not quiet:
+            safe_print("[5/5] Filling page-number placeholders...")
+        # Sorted once; index is 1-based.
+        page_files = sorted(svg_final.glob('*.svg'))
+        total_pages = len(page_files)
+        replaced = 0
+        for i, svg_file in enumerate(page_files, start=1):
+            replaced += replace_in_file(svg_file, i, total_pages)
+        if not quiet:
+            if replaced > 0:
+                safe_print(f"      {replaced} placeholder(s) replaced across {total_pages} page(s)")
+            else:
+                safe_print("      No placeholders")
 
     # Done
     if not quiet:
@@ -276,6 +302,7 @@ Processing options (for --only):
   align-images  Align (slice/meet) + Base64-embed all <image> (single pass)
   flatten-text  Flatten text
   fix-rounded   Convert rounded rects to Path
+  page-numbers  Replace {{PAGE_NUM}} / {{TOTAL_PAGES}} placeholders
 
 Aliases (still accepted):
   crop-images, fix-aspect, embed-images  → all map to align-images
@@ -291,6 +318,7 @@ Aliases (still accepted):
             # Backwards-compatible aliases — all three map to align-images now.
             'crop-images', 'fix-aspect', 'embed-images',
             'flatten-text', 'fix-rounded',
+            'page-numbers',
         ],
         help=('Execute only specified processing steps (default: all). '
               'crop-images / fix-aspect / embed-images are accepted as '
@@ -323,6 +351,7 @@ Aliases (still accepted):
             'align_images': bool(only & _ALIGN_ALIASES),
             'flatten_text': 'flatten-text' in only,
             'fix_rounded': 'fix-rounded' in only,
+            'page_numbers': 'page-numbers' in only,
         }
     else:
         # Execute all by default
@@ -331,6 +360,7 @@ Aliases (still accepted):
             'align_images': True,
             'flatten_text': True,
             'fix_rounded': True,
+            'page_numbers': True,
         }
 
     success = finalize_project(args.project_dir, options, args.dry_run, args.quiet,

@@ -6,6 +6,9 @@
 
   <image x="78" y="80" width="160" height="36" xlink:href="logo-dark.png" alt="Lenovo"/>
 
+  <text x="640" y="275" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="14" font-weight="400" font-style="italic" fill="#A0A0A0">{{CHAPTER_LABEL}}</text>
+
   <text x="640" y="335" text-anchor="middle" dominant-baseline="middle"
         font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#F2F2F2">{{CHAPTER_TITLE}}</text>
 

@@ -44,6 +44,10 @@ primary_color: "#XXXXXX"
 
 Decks may include additional supporting sections (Voice & Tone, Icon Style, Layout Modes, Spacing Specification, SVG Technical Constraints, Placeholder Specification, Asset Specification, Usage Notes). Use them when meaningful for the replica.
 
+### Section heading naming pitfall
+
+`scripts/svg_quality_checker.py:1273` matches the **first** section in `design_spec.md` whose heading is `Page Roster`, `Page Structure`, `Pages`, or `Page Types` (any roman numeral prefix is fine) and uses that section's body as the page roster. To avoid the roster parser picking the wrong section, **don't title non-roster sections with any of those four phrases** — use `Layout Sketches`, `Layouts`, `Pages Index`, etc. for non-roster page-related sections. The roster section should be titled exactly `Page Roster` (or one of the other three) and must contain `<stem>.svg` references in backticks (e.g. `` `01_cover.svg` ``). The schema sample above lists it as `## VIII. SVG Page Roster`; do not rename it (e.g. `## VIII. SVG Pages` or `## VIII. Page Structure`) without first verifying the regex still resolves the same section.
+
 ---
 
 ## Fusion behavior at Step 3

@@ -34,7 +34,7 @@ The accent set is shared across both themes; only `bg` and `text` invert. `prima
 | primary | `#E1251B` | fact | Lenovo Red — `accent1` in `ppt/theme/theme1.xml` (clrScheme `OneLenovo`); emphasis, primary CTA, focus highlights |
 | secondary | `#F26A52` | fact | Coral — `dk2`; warm secondary tone for callouts |
 | accent | `#871C23` | fact | Maroon — `accent2`; secondary red shade for dark-on-light emphasis |
-| accent (lavender) | `#D9C1D8` | fact | `accent3`; soft secondary highlight, badge fills |
+| accent (lavender) | `#D9C1D8` | fact | `accent3`; soft secondary highlight, badge fills (also used as TOC numbered-circle fill in the deck; stays lavender on both themes — the bright spot on dark bg) |
 | accent (deep purple) | `#4D144A` | fact | `accent4`; also the official wordmark color (see §IV) |
 | accent (pale blue) | `#C9D0F0` | fact | `accent5`; cool secondary surface |
 | accent (deep navy) | `#11184F` | fact | `accent6`; dark accent for contrast blocks |
@@ -52,7 +52,7 @@ The accent set is shared across both themes; only `bg` and `text` invert. `prima
 | primary | `#E1251B` | fact | Lenovo Red — same red, accent1; the bright red keeps high contrast on dark bg |
 | secondary | `#F26A52` | fact | Coral — same |
 | accent | `#871C23` | fact | Maroon — same |
-| accent (lavender) | `#D9C1D8` | fact | Same |
+| accent (lavender) | `#D9C1D8` | fact | Same (also used as TOC numbered-circle fill in the deck; stays lavender on both themes — the bright spot on dark bg) |
 | accent (deep purple) | `#4D144A` | fact | Same (but wordmark is reversed to white on this bg — see §IV) |
 | accent (pale blue) | `#C9D0F0` | fact | Same |
 | accent (deep navy) | `#11184F` | fact | Same; for darker accent blocks, pair with surface `#1F1F2A` for separation |
@@ -148,3 +148,27 @@ Mirrors the cover for symmetry. Layout **mirrors the source's thanks treatment**
 - Optional secondary line: contact / Q&A prompt beneath the title, Arial Regular 24pt
 - Background: theme `bg` color; no footer, no page number, no corner mark (the wordmark alone provides the brand signal)
 - If the user wants a Q&A contact card, add it as a separate content page immediately before the thanks page
+
+### VII.5 Chapter divider
+
+A single-section break page between major parts of the deck. One slide, full-bleed, no body content beyond the chapter title. Concrete implementation: `templates/decks/lenovo/02_chapter.svg`.
+
+- Wordmark: top-left, theme-appropriate variant (matches the cover's wordmark choice)
+- Optional small "Part" / "Section" / "Chapter" label above the title — Arial Italic 14pt, `muted-text` color, centered (placeholder: `{{CHAPTER_LABEL}}`, e.g. `PART 01`, `SECTION A`, `CHAPTER 3`)
+- Title: centered, Arial Bold 54pt — content is `{{CHAPTER_TITLE}}`
+- Description: centered beneath the title, Arial Regular 20pt, `muted-text` color — content is `{{CHAPTER_DESC}}`
+- 3-zone footer (per §VII.2): classification line / `{{DECK_TITLE}}` / `{{PAGE_NUM}} / {{TOTAL_PAGES}}`
+- Background: theme `bg` color (the deck's chapter page renders dark even on a light deck — a section break is a visual moment, not a theme choice)
+- No page transitions / entrance animations by default — the Strategist may opt in via `customize-animations` if the user asks
+
+### VII.6 Table of contents
+
+A single-page overview of the deck's 2–6 sections, presented as a 2×3 numbered grid. Concrete implementation: `templates/decks/lenovo/02_toc.svg` (light) and `02_toc_dark.svg` (dark).
+
+- Wordmark: top-left, theme-appropriate variant
+- Heading: top-left, Arial Bold 32pt, e.g. "Contents"; an optional 3px red accent line (Lenovo Red, `#E1251B`) sits ~3px under the heading, ~162px wide
+- Numbered items: 2×3 grid of 68px-diameter lavender circles (`#D9C1D8`, the brand's `accent (lavender)`); the same lavender fill is used on both themes — on the dark TOC it is the bright spot against the near-black background
+- Inside each circle: the section number in Arial Bold 28pt, near-black (`#1A1A1A`), centered (placeholders `{{TOC_NUM_1}}`–`{{TOC_NUM_6}}` so the Strategist can fill non-consecutive numbers)
+- To the right of each circle: item title in Arial Bold 18pt (`{{TOC_ITEM_N_TITLE}}`) and optional description in Arial Regular 14pt, `muted-text` color (`{{TOC_ITEM_N_DESC}}`)
+- Items 4–6 are optional — the Strategist hides a row by leaving its `_TITLE` and `_DESC` placeholders empty
+- 3-zone footer (per §VII.2)

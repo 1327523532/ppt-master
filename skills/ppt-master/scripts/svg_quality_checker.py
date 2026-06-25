@@ -62,6 +62,25 @@ RAMP_MAX_RATIO = 5.0
 POSTER_SIZE_MODES = {'showcase'}
 POSTER_SIZE_STYLES = {'zine'}
 
+# Text overflow / alignment check thresholds (see _check_text_overflow,
+# _check_text_alignment). The width coefficients in estimate_text_width
+# approximate typical proportional font metrics — CJK 1.0em, Latin upper
+# 0.65em, lower/digit 0.55em, whitespace 0.25em, other 0.5em. Catches the
+# common 80% of overflow/alignment bugs; misses font-metric edge cases
+# (kerning, ligatures, bold/italic width deltas, monospace overrides).
+_TEXT_OVERFLOW_ERR_RATIO = 0.15
+_TEXT_OVERFLOW_WARN_RATIO = 0.05
+_TEXT_ALIGN_ERR_PX = 24
+_TEXT_ALIGN_WARN_PX = 8
+_DECORATIVE_TEXT_MIN_FONTSIZE = 8
+_COLUMN_BAND_LEFT_MAX = 0.4
+_COLUMN_BAND_RIGHT_MIN = 0.6
+# Banner-rect detection: a rect inside a <g> that has >= this many subsequent
+# <text> siblings at distinct x positions is classified as a shared background
+# banner (header bar / table header / chart axis row), not a per-text container.
+# See _find_banner_rects.
+_BANNER_MIN_DISTINCT_X = 3
+
 
 def _design_spec_is_brand(spec_path: Path) -> bool:
     """Return True when a design_spec.md frontmatter declares ``kind: brand``.
@@ -87,6 +106,133 @@ def _design_spec_is_brand(spec_path: Path) -> bool:
             value = stripped.split(':', 1)[1].strip().strip('"\'')
             return value == 'brand'
     return False
+
+
+def _parse_float_attr(elem, name: str, default: float = 0.0) -> float:
+    """Read a numeric attribute, returning `default` on missing / unparseable."""
+    val = elem.get(name)
+    if val is None:
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _parse_rect_bbox(rect, canvas_w: float | None = None, canvas_h: float | None = None,
+                      text_x: float | None = None, text_anchor: str = 'start',
+                      text_width: float = 0.0) -> Tuple[float, float, float, float] | None:
+    """Return (left, top, right, bottom) for a <rect>, or None if the rect is
+    too thin / narrow / small / full-canvas / non-overlapping with text to be
+    a text container.
+
+    Filters out decorative geometry that real-world SVGs often draw before
+    text in document order:
+    - thin horizontal dividers (width > height and height < 8 px)
+    - narrow vertical stripes (height > width and width < 12 px)
+    - any rect smaller than 24x12 — too small to hold meaningful text
+    - full-canvas backgrounds (>= 95% of canvas width AND height) — these
+      are page backgrounds / gradients, not text containers; real text is
+      inset from the canvas edge by design padding
+
+    When text_x/text_anchor/text_width are provided, additionally require the
+    text's estimated bbox to overlap the rect horizontally. This filters
+    chart-bar data labels (text positioned just past a bar's right edge —
+    common in bar charts where the label sits after the bar it describes).
+    Such text isn't "in" the bar, it's adjacent to it.
+    """
+    x = _parse_float_attr(rect, 'x')
+    y = _parse_float_attr(rect, 'y')
+    w = _parse_float_attr(rect, 'width')
+    h = _parse_float_attr(rect, 'height')
+    if w <= 0 or h <= 0:
+        return None
+    if (w > h and h < 8) or (h > w and w < 12) or w < 24 or h < 12:
+        return None
+    if canvas_w is not None and canvas_h is not None:
+        if w >= canvas_w * 0.95 and h >= canvas_h * 0.95:
+            return None
+    if text_x is not None:
+        if text_anchor == 'middle':
+            text_start = text_x - text_width / 2
+            text_end = text_x + text_width / 2
+        elif text_anchor == 'end':
+            text_start = text_x - text_width
+            text_end = text_x
+        else:
+            text_start = text_x
+            text_end = text_x + text_width
+        # Skip rect if the text's estimated bbox is entirely outside the
+        # rect's bbox (5 px tolerance for sub-pixel rounding / hairline
+        # padding). Catches two patterns where the rect is not the text's
+        # real container: (1) chart-bar data labels positioned just past a
+        # bar's right edge, (2) chart-axis labels that happen to fall in a
+        # region covered by some unrelated frame rect.
+        if text_end < x - 5 or text_start > x + w + 5:
+            return None
+    return (x, y, x + w, y + h)
+
+
+def _parse_circle_bbox(circle, text_x: float | None = None, text_y: float | None = None) -> Tuple[float, float, float, float] | None:
+    """Return (left, top, right, bottom) for a <circle>, or None if r is invalid
+    or the circle is too small to be a text badge (r < 18, diameter < 36).
+
+    When text_x/text_y are provided, additionally require the text anchor to
+    fall inside the circle (within ±r of cx/cy). This filters vector-diagram
+    dots (e.g. Q/K/V markers in attention diagrams) that happen to be drawn
+    before a separate text label — those dots are decoration, not containers,
+    even when their r is large enough to clear the size threshold.
+
+    Threshold rationale: small circles (r=12–17) appear in vector diagrams as
+    query/key/value dots that are drawn next to — not around — text labels.
+    Real text-bearing badges are typically r >= 20 with the text centered on
+    cx/cy.
+    """
+    cx = _parse_float_attr(circle, 'cx')
+    cy = _parse_float_attr(circle, 'cy')
+    r = _parse_float_attr(circle, 'r')
+    if r < 18:
+        return None
+    if text_x is not None and text_y is not None:
+        if abs(text_x - cx) > r or abs(text_y - cy) > r:
+            return None
+    return (cx - r, cy - r, cx + r, cy + r)
+
+
+def estimate_text_width(text_content: str, font_size: float) -> float:
+    """Estimate rendered text width by summing per-character width coefficients.
+
+    Coefficients approximate typical proportional font metrics:
+    - ASCII uppercase Latin (A-Z): 0.65em
+    - ASCII lowercase Latin (a-z) and digits (0-9): 0.55em
+    - Whitespace: 0.25em
+    - CJK ideographs / kana / hangul / CJK symbols: 1.0em (covers the
+      ranges used by Strategist output: Hiragana/Katakana, CJK Unified /
+      Ext A / Compat, Hangul syllables, fullwidth forms)
+    - Everything else (punctuation, symbols, emoji, Latin extended): 0.5em
+    """
+    if not text_content or font_size <= 0:
+        return 0.0
+    width = 0.0
+    for ch in text_content:
+        cp = ord(ch)
+        if cp < 128:
+            if ch.isupper():
+                width += 0.65
+            elif ch.islower() or ch.isdigit():
+                width += 0.55
+            elif ch.isspace():
+                width += 0.25
+            else:
+                width += 0.5
+        elif (0x3000 <= cp <= 0x303F or 0x3040 <= cp <= 0x309F
+              or 0x30A0 <= cp <= 0x30FF or 0x3400 <= cp <= 0x4DBF
+              or 0x4E00 <= cp <= 0x9FFF or 0xAC00 <= cp <= 0xD7AF
+              or 0xF900 <= cp <= 0xFAFF):
+            width += 1.0
+        else:
+            width += 0.5
+    return width * font_size
 
 
 def _parse_placeholders_fallback(block: str) -> Dict[str, Tuple[str, ...]]:
@@ -275,6 +421,12 @@ class SVGQualityChecker:
 
                 # 6. Check text wrapping methods
                 self._check_text_elements(content, result)
+
+                # 6b. Estimate text overflow vs nearest container rect/circle.
+                self._check_text_overflow(content, result)
+
+                # 6c. Check text-anchor / dominant-baseline alignment vs container center.
+                self._check_text_alignment(content, result)
 
                 # 7. Check image references (file existence and resolution)
                 self._check_image_references(content, svg_path, result)
@@ -572,6 +724,327 @@ class SVGQualityChecker:
             result['warnings'].append(
                 f"Detected {len(text_matches)} potentially overly long single-line text(s) (consider using tspan for wrapping)"
             )
+
+    def _canvas_dims(self, root) -> Tuple[float, float]:
+        """Return (width, height) from the SVG root, falling back to ppt169 1280x720."""
+        width = _parse_float_attr(root, 'width', 1280.0)
+        height = _parse_float_attr(root, 'height', 720.0)
+        vb = root.get('viewBox')
+        if vb:
+            parts = vb.split()
+            if len(parts) == 4:
+                try:
+                    return (float(parts[2]), float(parts[3]))
+                except ValueError:
+                    pass
+        return (width, height)
+
+    def _find_banner_rects(self, root) -> Set:
+        """Identify <rect> elements that are shared background banners rather than
+        per-text containers.
+
+        A rect is classified as a banner when, within its parent <g>, it has
+        >= _BANNER_MIN_DISTINCT_X subsequent <text> siblings at >= that many
+        distinct x positions. This is the signature of a header bar / chart
+        axis row / table header that spans multiple columns: a single rect
+        drawn once, then multiple label texts at different x's laid on top.
+        Such rects are NOT containers for any individual text — picking one
+        as a per-text container misaligns all the labels.
+
+        Returns a set of rect ElementTree nodes (compared via element
+        identity in `_resolve_text_container`).
+        """
+        banners: Set = set()
+        for parent in root.iter(f'{{{SVG_NS}}}g'):
+            current_rect = None
+            rect_x_set: Dict = {}
+            for child in list(parent):
+                tag = child.tag.split('}', 1)[-1]
+                if tag == 'rect':
+                    current_rect = child
+                    rect_x_set[child] = set()
+                elif tag == 'text' and current_rect is not None:
+                    x_str = child.get('x', '0')
+                    try:
+                        rect_x_set[current_rect].add(float(x_str))
+                    except ValueError:
+                        pass
+            for rect, x_set in rect_x_set.items():
+                if len(x_set) >= _BANNER_MIN_DISTINCT_X:
+                    banners.add(rect)
+        return banners
+
+    def _resolve_text_container(self, text_elem, parent_map, canvas_w: float, canvas_h: float,
+                                 banner_rects=None):
+        """Return (left, top, right, bottom, source) for text_elem's nearest container.
+
+        Walks up to 3 levels of parent <g> looking for the closest preceding
+        sibling <rect> or <circle> (document order). Skips rects classified as
+        shared background banners (see _find_banner_rects). Falls back to a
+        3-column band heuristic when no rect/circle is found. Returns
+        (None, ..., 'skipped') for text inside <defs>/<symbol>/<clipPath>/<mask>,
+        decorative text (fill=none stroke-only, font-size<8), or text with no
+        parseable container. Tuple order matches _parse_rect_bbox /
+        _parse_circle_bbox: (left, top, right, bottom, source).
+        """
+        cur = text_elem
+        while cur is not None:
+            tag = cur.tag.split('}', 1)[-1]
+            if tag in ('defs', 'symbol', 'clipPath', 'mask'):
+                return (None, None, None, None, 'skipped')
+            cur = parent_map.get(cur)
+
+        fill = text_elem.get('fill', '')
+        style = text_elem.get('style', '')
+        fill_in_style = re.search(r'fill\s*:\s*([^;]+)', style)
+        effective_fill = fill_in_style.group(1).strip() if fill_in_style else fill
+        if effective_fill == 'none':
+            return (None, None, None, None, 'skipped_decorative')
+
+        font_size = _parse_float_attr(text_elem, 'font-size', 16.0)
+        if font_size < _DECORATIVE_TEXT_MIN_FONTSIZE:
+            return (None, None, None, None, 'skipped_decorative')
+
+        cur = text_elem
+        text_x_for_filter = _parse_float_attr(text_elem, 'x', 0.0)
+        text_y_for_filter = _parse_float_attr(text_elem, 'y', 0.0)
+        text_anchor_for_filter = text_elem.get('text-anchor', 'start')
+        text_width_for_filter = 0.0
+        font_size_for_filter = _parse_float_attr(text_elem, 'font-size', 16.0)
+        style_attr = text_elem.get('style', '')
+        m = re.search(r'font-size\s*:\s*(\d+(?:\.\d+)?)', style_attr)
+        if m:
+            font_size_for_filter = float(m.group(1))
+        if text_elem.text:
+            text_width_for_filter = estimate_text_width(text_elem.text, font_size_for_filter)
+        for _ in range(3):
+            parent = parent_map.get(cur) if cur is not None else None
+            if parent is None:
+                break
+            siblings = list(parent)
+            try:
+                text_idx = siblings.index(cur)
+            except ValueError:
+                cur = parent
+                continue
+            for i in range(text_idx - 1, -1, -1):
+                sib = siblings[i]
+                sib_tag = sib.tag.split('}', 1)[-1]
+                if sib_tag == 'rect':
+                    if banner_rects is not None and sib in banner_rects:
+                        continue
+                    bbox = _parse_rect_bbox(sib, canvas_w, canvas_h,
+                                            text_x_for_filter, text_anchor_for_filter,
+                                            text_width_for_filter)
+                    if bbox is not None:
+                        return (*bbox, 'rect')
+                elif sib_tag == 'circle':
+                    bbox = _parse_circle_bbox(sib, text_x_for_filter, text_y_for_filter)
+                    if bbox is not None:
+                        return (*bbox, 'circle')
+            cur = parent
+
+        text_x = _parse_float_attr(text_elem, 'x', 0.0)
+        if text_x < canvas_w * _COLUMN_BAND_LEFT_MAX:
+            return (0.0, canvas_w / 3, 0.0, canvas_h, 'column_band_fallback')
+        elif text_x > canvas_w * _COLUMN_BAND_RIGHT_MIN:
+            return (canvas_w * 2 / 3, canvas_w, 0.0, canvas_h, 'column_band_fallback')
+        else:
+            return (canvas_w / 3, canvas_w * 2 / 3, 0.0, canvas_h, 'column_band_fallback')
+
+    def _collect_text_lines(self, text_elem) -> List[str]:
+        """Return text content of <text> + each <tspan> as separate lines."""
+        lines: List[str] = []
+        own = (text_elem.text or '').strip()
+        if own:
+            lines.append(own)
+        for tspan in text_elem.findall(f'{{{SVG_NS}}}tspan'):
+            ts_text = (tspan.text or '').strip()
+            if ts_text:
+                lines.append(ts_text)
+            if tspan.tail and tspan.tail.strip():
+                lines.append(tspan.tail.strip())
+        return lines
+
+    def _check_text_overflow(self, content: str, result: Dict):
+        """Estimate whether a <text> extends past its visual container.
+
+        Walks ElementTree, estimates per-line width using character-class
+        coefficients (see estimate_text_width), and compares against the
+        nearest preceding sibling <rect>/<circle> bounding box, or a 3-column
+        band fallback. Thresholds: overflow > 15% of container width → error,
+        5–15% → warning.
+
+        Known limitations (heuristic, no font metrics):
+        - kerning / ligatures / bold-italic width deltas → may over- or
+          under-estimate width by 5–15%
+        - monospace font overrides (e.g. Courier New) → coefficients are
+          off; expect ~20% width drift
+        - multi-line <text> via stacked sibling <text> elements → each
+          <text> is checked independently, so the worst line is what fires
+        - containers decorated with very thin/narrow/full-canvas rects →
+          filtered out by _parse_rect_bbox, but unusual layouts can still
+          produce false positives (~9% on the example-deck corpus, mostly
+          chart pages with labels positioned adjacent to bars)
+        """
+        try:
+            root = ET.fromstring(content)
+        except ET.ParseError:
+            return
+
+        parent_map = {child: parent for parent in root.iter() for child in parent}
+        canvas_w, canvas_h = self._canvas_dims(root)
+        banner_rects = self._find_banner_rects(root)
+
+        for text_elem in root.iter(f'{{{SVG_NS}}}text'):
+            left, _top, right, _bottom, source = self._resolve_text_container(
+                text_elem, parent_map, canvas_w, canvas_h, banner_rects
+            )
+            if left is None:
+                continue
+
+            font_size = _parse_float_attr(text_elem, 'font-size', 16.0)
+            if font_size < _DECORATIVE_TEXT_MIN_FONTSIZE:
+                continue
+            style = text_elem.get('style', '')
+            m = re.search(r'font-size\s*:\s*(\d+(?:\.\d+)?)', style)
+            if m:
+                font_size = float(m.group(1))
+
+            lines = self._collect_text_lines(text_elem)
+            if not lines:
+                continue
+
+            max_width = max(estimate_text_width(line, font_size) for line in lines)
+            container_w = right - left
+            if container_w <= 0:
+                continue
+
+            text_x = _parse_float_attr(text_elem, 'x', 0.0)
+            text_anchor = text_elem.get('text-anchor', 'start')
+            if text_anchor == 'middle':
+                text_start = text_x - max_width / 2
+            elif text_anchor == 'end':
+                text_start = text_x - max_width
+            else:
+                text_start = text_x
+            text_end = text_start + max_width
+
+            overflow_left = max(0.0, left - text_start)
+            overflow_right = max(0.0, text_end - right)
+            overflow_total = overflow_left + overflow_right
+            overflow_ratio = overflow_total / container_w
+
+            if overflow_ratio > _TEXT_OVERFLOW_ERR_RATIO:
+                preview = (lines[0][:20] + '...') if len(lines[0]) > 20 else lines[0]
+                result['errors'].append(
+                    f"text overflow: estimated {max_width:.0f}px text in "
+                    f"{source} container {container_w:.0f}px wide, overflow "
+                    f"{overflow_ratio*100:.0f}% — text \"{preview}\""
+                )
+            elif overflow_ratio > _TEXT_OVERFLOW_WARN_RATIO:
+                preview = (lines[0][:20] + '...') if len(lines[0]) > 20 else lines[0]
+                result['warnings'].append(
+                    f"text may overflow: estimated {max_width:.0f}px text in "
+                    f"{source} container {container_w:.0f}px wide, overflow "
+                    f"{overflow_ratio*100:.0f}% — text \"{preview}\""
+                )
+
+    def _check_text_alignment(self, content: str, result: Dict):
+        """Flag text whose text-anchor / x drifts from its container's center.
+
+        Mirrors visual-review rubric S4 (alignment drift, soft) at the static
+        layer: catches `text-anchor="middle"` chips/headings placed at the wrong
+        x, and `text-anchor="end"` text placed off the container's right edge.
+        Skips when container is a column-band fallback (too coarse for
+        pixel-level alignment detection). Also checks `dominant-baseline=middle`
+        against container vertical center (Lenovo-style badge idiom).
+
+        Known limitations:
+        - On chart-heavy pages where multiple text labels share the same
+          outer frame rect, the first frame rect may be selected as the
+          container for all labels even when the labels are intentionally
+          positioned at different x's. The check fires a misalignment error
+          per label; the user must visually verify whether the offset is
+          design-intentional padding or a real bug. ~9% of example-deck
+          pages exhibit this pattern.
+        - Column-band fallback is intentionally skipped (too coarse) —
+          alignment errors in pages without rect/circle containers go
+          uncaught. The visual-review rubric (H2/S4) is the backstop.
+        """
+        try:
+            root = ET.fromstring(content)
+        except ET.ParseError:
+            return
+
+        parent_map = {child: parent for parent in root.iter() for child in parent}
+        canvas_w, canvas_h = self._canvas_dims(root)
+        banner_rects = self._find_banner_rects(root)
+
+        for text_elem in root.iter(f'{{{SVG_NS}}}text'):
+            text_anchor = text_elem.get('text-anchor')
+            dominant_baseline = text_elem.get('dominant-baseline')
+
+            if text_anchor not in ('middle', 'end') and dominant_baseline != 'middle':
+                continue
+
+            left, top, right, bottom, source = self._resolve_text_container(
+                text_elem, parent_map, canvas_w, canvas_h, banner_rects
+            )
+            if left is None:
+                continue
+
+            if source == 'column_band_fallback':
+                continue
+
+            text_x = _parse_float_attr(text_elem, 'x', 0.0)
+            text_y = _parse_float_attr(text_elem, 'y', 0.0)
+
+            if text_anchor == 'middle':
+                container_cx = (left + right) / 2
+                dx = abs(text_x - container_cx)
+                if dx > _TEXT_ALIGN_ERR_PX:
+                    result['errors'].append(
+                        f"text-alignment: text-anchor=middle x={text_x:.0f} "
+                        f"differs from container center {container_cx:.0f} "
+                        f"by {dx:.0f}px ({source})"
+                    )
+                elif dx > _TEXT_ALIGN_WARN_PX:
+                    result['warnings'].append(
+                        f"text-alignment: text-anchor=middle x={text_x:.0f} "
+                        f"drifts {dx:.0f}px from container center "
+                        f"{container_cx:.0f} ({source})"
+                    )
+            elif text_anchor == 'end':
+                dx = abs(text_x - right)
+                if dx > _TEXT_ALIGN_ERR_PX:
+                    result['errors'].append(
+                        f"text-alignment: text-anchor=end x={text_x:.0f} "
+                        f"differs from container right edge {right:.0f} "
+                        f"by {dx:.0f}px ({source})"
+                    )
+                elif dx > _TEXT_ALIGN_WARN_PX:
+                    result['warnings'].append(
+                        f"text-alignment: text-anchor=end x={text_x:.0f} "
+                        f"drifts {dx:.0f}px from container right edge "
+                        f"{right:.0f} ({source})"
+                    )
+
+            if dominant_baseline == 'middle':
+                container_cy = (top + bottom) / 2
+                dy = abs(text_y - container_cy)
+                if dy > _TEXT_ALIGN_ERR_PX:
+                    result['errors'].append(
+                        f"text-alignment: dominant-baseline=middle y={text_y:.0f} "
+                        f"differs from container center {container_cy:.0f} "
+                        f"by {dy:.0f}px ({source})"
+                    )
+                elif dy > _TEXT_ALIGN_WARN_PX:
+                    result['warnings'].append(
+                        f"text-alignment: dominant-baseline=middle y={text_y:.0f} "
+                        f"drifts {dy:.0f}px from container center "
+                        f"{container_cy:.0f} ({source})"
+                    )
 
     def _check_image_references(self, content: str, svg_path: Path, result: Dict):
         """Check image file existence and resolution vs display size."""

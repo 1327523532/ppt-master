@@ -62,6 +62,10 @@ When the frontmatter declares `themes`, `§II Color Scheme` becomes a container 
 
 Single-theme brands (e.g. `anthropic`, `google`) omit both fields and behave exactly as before.
 
+## Section heading naming pitfall
+
+`scripts/svg_quality_checker.py:1273` matches the **first** section in `design_spec.md` whose heading is `Page Roster`, `Page Structure`, `Pages`, or `Page Types` (any roman numeral prefix is fine) and uses that section's body as the page roster. To avoid the roster parser picking the wrong section, **don't title non-roster sections with any of those four phrases** — use `Layout Sketches`, `Layouts`, `Pages Index`, etc. for non-roster page-related sections. The roster section should be titled exactly `Page Roster` (or one of the other three) and must contain `<stem>.svg` references in backticks (e.g. `` `01_cover.svg` ``). Brands do not carry an SVG roster, so this pitfall typically only matters when a brand is fused with a deck — the fused `design_spec.md` inherits the deck's roster section verbatim.
+
 ## Discovery index
 
 [brands_index.json](./brands_index.json) is a slim machine-readable map (`brand_id → { summary, primary_color }`). It is refreshed by `register_template.py --kind brand <brand_id>` after a brand is created or edited.
