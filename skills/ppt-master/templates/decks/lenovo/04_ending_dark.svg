@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1280 720">
+  <title>Lenovo Thanks (Dark)</title>
+  <desc>Lenovo branded thanks / ending page, dark theme — content is fixed.</desc>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#191919"/>
+
+  <image x="78" y="80" width="160" height="36" xlink:href="logo-dark.png" alt="Lenovo"/>
+
+  <text x="640" y="360" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="96" font-weight="700"
+        fill="#F2F2F2">Thanks</text>
+</svg>

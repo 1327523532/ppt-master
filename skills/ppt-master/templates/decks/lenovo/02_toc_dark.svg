@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1280 720">
+  <title>Lenovo TOC (Dark)</title>
+  <desc>Lenovo branded TOC page, dark theme — 6 numbered items in a 2×3 grid with placeholders for title and description per item.</desc>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#191919"/>
+
+  <image x="78" y="80" width="160" height="36" xlink:href="logo-dark.png" alt="Lenovo"/>
+
+  <text x="78" y="160" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#F2F2F2">Contents</text>
+  <line x1="78" y1="172" x2="240" y2="172" stroke="#E1251B" stroke-width="3"/>
+
+  <!-- Row 1 -->
+  <circle cx="116" cy="262" r="34" fill="#D9C1D8"/>
+  <text x="116" y="262" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">1</text>
+  <text x="170" y="252" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_1_TITLE}}</text>
+  <text x="170" y="280" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_1_DESC}}</text>
+
+  <circle cx="702" cy="262" r="34" fill="#D9C1D8"/>
+  <text x="702" y="262" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">4</text>
+  <text x="756" y="252" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_4_TITLE}}</text>
+  <text x="756" y="280" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_4_DESC}}</text>
+
+  <!-- Row 2 -->
+  <circle cx="116" cy="392" r="34" fill="#D9C1D8"/>
+  <text x="116" y="392" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">2</text>
+  <text x="170" y="382" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_2_TITLE}}</text>
+  <text x="170" y="410" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_2_DESC}}</text>
+
+  <circle cx="702" cy="392" r="34" fill="#D9C1D8"/>
+  <text x="702" y="392" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">5</text>
+  <text x="756" y="382" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_5_TITLE}}</text>
+  <text x="756" y="410" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_5_DESC}}</text>
+
+  <!-- Row 3 -->
+  <circle cx="116" cy="522" r="34" fill="#D9C1D8"/>
+  <text x="116" y="522" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">3</text>
+  <text x="170" y="512" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_3_TITLE}}</text>
+  <text x="170" y="540" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_3_DESC}}</text>
+
+  <circle cx="702" cy="522" r="34" fill="#D9C1D8"/>
+  <text x="702" y="522" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">6</text>
+  <text x="756" y="512" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#F2F2F2">{{TOC_ITEM_6_TITLE}}</text>
+  <text x="756" y="540" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#A0A0A0">{{TOC_ITEM_6_DESC}}</text>
+
+  <!-- 3-zone footer -->
+  <line x1="72" y1="664" x2="1208" y2="664" stroke="#3A3A3A" stroke-width="0.5"/>
+  <text x="78" y="685" font-family="Arial, sans-serif" font-size="10" font-weight="400" fill="#F2F2F2">©2026 Lenovo Internal. All rights reserved.</text>
+  <text x="640" y="685" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-style="italic" font-weight="400" fill="#A0A0A0">{{DECK_TITLE}}</text>
+  <text x="1202" y="685" text-anchor="end" font-family="Arial, sans-serif" font-size="10" font-weight="400" fill="#F2F2F2">{{PAGE_NUM}} / {{TOTAL_PAGES}}</text>
+</svg>

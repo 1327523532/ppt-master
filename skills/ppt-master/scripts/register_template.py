@@ -211,10 +211,26 @@ def _extract_entry(kind: str, template_id: str, template_dir: Path) -> dict:
     primary_color = fm.get("primary_color") or _extract_primary_color(body) or ""
 
     if kind == "brand":
-        entry = OrderedDict(
-            summary=summary,
-            primary_color=str(primary_color),
-        )
+        entry = OrderedDict(summary=summary, primary_color=str(primary_color))
+        themes = fm.get("themes")
+        if themes is not None:
+            if isinstance(themes, str):
+                themes = [t.strip() for t in re.split(r"[,，]", themes) if t.strip()]
+            if not isinstance(themes, list) or not all(isinstance(t, str) for t in themes):
+                raise SpecParseError(
+                    "design_spec.md frontmatter `themes` must be a list of strings"
+                )
+            entry["themes"] = list(themes)
+            default_theme = fm.get("default_theme")
+            if default_theme is not None:
+                default_theme = str(default_theme).strip()
+                if default_theme and default_theme not in entry["themes"]:
+                    raise SpecParseError(
+                        f"design_spec.md frontmatter `default_theme`={default_theme!r} "
+                        f"must appear in `themes`={entry['themes']!r}"
+                    )
+                if default_theme:
+                    entry["default_theme"] = default_theme
     elif kind == "layout":
         page_types = fm.get("page_types") or _derive_page_types(pages)
         if isinstance(page_types, str):

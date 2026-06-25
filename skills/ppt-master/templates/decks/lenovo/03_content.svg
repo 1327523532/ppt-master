@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1280 720">
+  <title>Lenovo Content (Light)</title>
+  <desc>Lenovo branded content page, light theme — corner-mark wordmark top-right, page title, optional key message, open content area, 3-zone footer.</desc>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+
+  <!-- Top-right corner mark -->
+  <image x="1142" y="50" width="100" height="22" xlink:href="logo-light.png" alt="Lenovo"/>
+
+  <!-- Page title (left-aligned, top-left) -->
+  <text x="78" y="124" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#1A1A1A">{{PAGE_TITLE}}</text>
+  <line x1="78" y1="138" x2="238" y2="138" stroke="#E1251B" stroke-width="3"/>
+
+  <!-- Key message (optional, red left bar + text) -->
+  <rect x="78" y="162" width="4" height="26" fill="#E1251B"/>
+  <text x="94" y="181" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#6B6B6B">{{KEY_MESSAGE}}</text>
+
+  <!-- Open content area -->
+  <rect x="72" y="216" width="1138" height="404" fill="none" stroke="#E0E0E0" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="640" y="425" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="20" font-weight="400" fill="#B0B0B0">{{CONTENT_AREA}}</text>
+
+  <!-- 3-zone footer -->
+  <line x1="72" y1="664" x2="1208" y2="664" stroke="#E0E0E0" stroke-width="0.5"/>
+  <text x="78" y="685" font-family="Arial, sans-serif" font-size="10" font-weight="400" fill="#1A1A1A">©2026 Lenovo Internal. All rights reserved.</text>
+  <text x="640" y="685" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-style="italic" font-weight="400" fill="#6B6B6B">{{DECK_TITLE}}</text>
+  <text x="1202" y="685" text-anchor="end" font-family="Arial, sans-serif" font-size="10" font-weight="400" fill="#1A1A1A">{{PAGE_NUM}} / {{TOTAL_PAGES}}</text>
+</svg>

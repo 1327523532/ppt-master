@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1280 720">
+  <title>Lenovo Cover (Light)</title>
+  <desc>Lenovo branded cover, light theme — replace {{TITLE}} and {{SUBTITLE}}.</desc>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+
+  <image x="78" y="80" width="160" height="36" xlink:href="logo-light.png" alt="Lenovo"/>
+
+  <text x="640" y="332" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="43" font-weight="700"
+        fill="#1A1A1A" style="text-transform: uppercase">{{TITLE}}</text>
+
+  <text x="640" y="548" text-anchor="middle" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="18" font-weight="400"
+        fill="#1A1A1A">{{SUBTITLE}}</text>
+
+  <text x="79" y="685" text-anchor="start" dominant-baseline="middle"
+        font-family="Arial, sans-serif" font-size="10" font-weight="400"
+        fill="#1A1A1A">©2026 Lenovo Internal. All rights reserved.</text>
+</svg>

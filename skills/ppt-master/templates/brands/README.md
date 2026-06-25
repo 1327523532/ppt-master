@@ -49,6 +49,19 @@ Logo filenames are descriptive, not contractual — `design_spec.md` §IV lists 
 
 `design_spec.md` carries a YAML frontmatter block with `kind: brand` and is the single source of truth for the brand identity. The six required sections are: I Brand Overview / II Color Scheme / III Typography / IV Logo / V Voice & Tone / VI Icon Style.
 
+## Multiple themes (optional)
+
+A brand may declare more than one named theme (for example `light` + `dark`) by adding two extra frontmatter fields and splitting `§II Color Scheme` into per-theme sub-tables. This is the recommended path when the brand ships paired palettes in source materials (e.g. `template.potx` + `template - light.potx` + `template - dark.potx`).
+
+| Field | Type | Notes |
+|---|---|---|
+| `themes` | list of strings | Names this brand supports; appears in the index entry when present |
+| `default_theme` | string | Must be one of the names in `themes`; pre-selected in Eight Confirmations |
+
+When the frontmatter declares `themes`, `§II Color Scheme` becomes a container for one sub-table per theme (e.g. `§II.1 Light theme`, `§II.2 Dark theme`). The accent set may stay identical across themes — only `bg` / `text` / `surface` / `border` / `muted-text` typically invert. The Strategist at SKILL.md Step 4 reads the chosen theme and locks its palette into `spec_lock.md`; the logo file (§IV) may also be theme-specific (e.g. `logo-light.png` + `logo-dark.png`).
+
+Single-theme brands (e.g. `anthropic`, `google`) omit both fields and behave exactly as before.
+
 ## Discovery index
 
 [brands_index.json](./brands_index.json) is a slim machine-readable map (`brand_id → { summary, primary_color }`). It is refreshed by `register_template.py --kind brand <brand_id>` after a brand is created or edited.
