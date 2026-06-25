@@ -36,7 +36,7 @@
     ↓
 [图表校准（可选）] → verify-charts 工作流（含数据图表的幻灯片在此步骤校准坐标）
     ↓
-[视觉自检（可选，opt-in）] → visual-review 工作流（仅在用户明确请求时触发）
+[视觉自检（默认开启）] → visual-review 工作流（智能跳过：用户显式 opt-out 短语 / playwright 缺失 / 页数 < 3 / spec_lock 写 `visual_review: off`；hard 命中自动修、soft 仅报告）
     ↓
 [后处理] → total_md_split.py（拆分讲稿）→ finalize_svg.py → svg_to_pptx.py
     ↓

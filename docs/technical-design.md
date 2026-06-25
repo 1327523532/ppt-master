@@ -36,7 +36,7 @@ User Input (PDF/DOCX/XLSX/URL/Markdown)
     ↓
 [Chart calibration (optional)] → verify-charts workflow (for decks containing data charts)
     ↓
-[Visual self-check (optional, opt-in)] → visual-review workflow (only when the user explicitly requests it)
+[Visual self-check (default-on)] → visual-review workflow (smart-skip on user opt-out phrase / missing playwright / deck < 3 pages / spec_lock `visual_review: off`; hard rubric hits auto-fix in place, soft hits aggregate to a non-blocking report)
     ↓
 [Post-processing] → total_md_split.py (split notes) → finalize_svg.py → svg_to_pptx.py
     ↓

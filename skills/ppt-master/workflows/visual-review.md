@@ -12,16 +12,23 @@ description: Per-page rubric-based visual self-review via parallel subagents. Ru
 
 ## Positioning
 
-This is an **optional auxiliary loop**, opt-in only. The main pipeline (SKILL.md Step 1–7) does not invoke it; trigger only when the user explicitly asks for a visual re-pass on the generated SVGs before export.
+**Default-on** between Executor and post-processing (SKILL.md Step 6 → Step 7 boundary). The main pipeline auto-invokes visual-review unless one of the **smart-skip conditions** below applies. The trigger is no longer an explicit user request; the default is on, opt-out is the exception.
 
 **Token cost**: each batch subagent re-reads the rubric + `design_spec.md` + `spec_lock.md` and processes K SVG+PNG pairs. For a 20-page deck with K=5, expect on the order of 100–150K additional input tokens on top of the main generation run.
 
 ## When to Run
 
 - Executor (SKILL.md Step 6) has finished all pages
-- `svg_quality_checker.py` has passed
+- `svg_quality_checker.py` has passed (static violations fixed first)
 - Post-processing (`finalize_svg.py`, `svg_to_pptx.py`) has **not** yet run
-- The user has explicitly requested visual review
+- None of the smart-skip conditions below apply
+
+**Smart-skip conditions** — any one skips the run. Log the skip reason in chat so the user knows the gate was bypassed:
+
+- **User opt-out** — this turn includes an explicit skip phrase (`skip visual review` / `跳过视觉自检` / `不要视觉评审` / equivalent). One-shot: re-runs on the next project unless re-asserted.
+- **Environment missing** — `playwright` Python package or its chromium binary is not installed (visual_review.py exits 3). Log `playwright_missing` and continue to Step 7; do not fail the pipeline over a missing browser.
+- **Deck too small** — `svg_output/` contains fewer than 3 page files. Log `deck_too_small` and continue.
+- **Project-level permanent opt-out** — `spec_lock.md` carries `visual_review: off` (rare; reserved for CI/automation contexts where review would be a wasted budget).
 
 For decks containing data charts, run [`verify-charts`](./verify-charts.md) first — visual-review focuses on visual rhythm / collision / alignment, not chart coordinate math.
 
@@ -30,7 +37,18 @@ For decks containing data charts, run [`verify-charts`](./verify-charts.md) firs
 - The project has no `svg_output/<page>.svg` files yet — finish Executor first
 - `svg_quality_checker.py` has not been run or has failed — fix static violations first
 - User has already applied annotations via `live-preview` workflow and is in a fixed-edit loop — describe changes directly, do not re-trigger rubric
-- The user has not asked for it — do not auto-invoke based on inferred model capability or deck size
+- A smart-skip condition above applies
+
+## Failure handling (default-on implies an explicit policy on subagent output)
+
+The visual-review rubric splits findings into **hard** and **soft** hits. Default-on maps to a two-tier response so the pipeline stays serial without forcing a manual gate on every deck:
+
+| Severity | Source | Default response |
+|---|---|---|
+| `hard` | rubric §1–§2 (legibility / overflow / collision / spec drift) | Subagent **fixes in place** on the first iteration, then re-validates. Fixed pages flow through to Step 7 with no user prompt. Originals are preserved at `<project>/.review/backup/<page>.iter<N>.svg`. |
+| `soft` | rubric §3–§5 (rhythm / whitespace preference / minor alignment) | Aggregated into the per-page Markdown table only. Does **not** block Step 7. The deck proceeds to post-processing with the soft hits surfaced for the user's own post-export review. |
+
+Pages where a hard fix was attempted but rolled back (rubric §4.2) come back as `needs_human`. Those are reported but do not block Step 7 by default — the user reviews them alongside the soft-hits table. If the user wants hard hits to escalate to a ⛔ BLOCKING confirmation (the legacy single-deck behavior), they say so in chat and the gate reverts for that run only.
 
 ---
 

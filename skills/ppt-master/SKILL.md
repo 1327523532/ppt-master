@@ -88,7 +88,7 @@ For complete tool documentation, see `${SKILL_DIR}/scripts/README.md`.
 | `verify-charts` | `workflows/verify-charts.md` | Chart coordinate calibration — run after SVG generation if the deck contains data charts |
 | `customize-animations` | `workflows/customize-animations.md` | Object-level PPTX animation customization — run only when the user explicitly asks to tune animation order/effects/timing |
 | `live-preview` | `workflows/live-preview.md` | Browser-based live preview — auto-started during generation and re-enterable any time the user mentions "live preview", "preview", "看效果", or wants to click/select a slide element |
-| `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — run only when the user explicitly asks for a visual re-pass on the generated SVGs (between Executor and post-processing). Opt-in only; never invoked by the main pipeline. |
+| `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — **default-on** between Executor and post-processing; subject to smart-skip conditions (user opt-out phrase, missing playwright/chromium, deck < 3 pages, `spec_lock.md: visual_review: off`). Hard rubric hits auto-fix in place; soft hits aggregate to a non-blocking report. |
 
 ### PPTX Route Boundary
 
@@ -560,7 +560,7 @@ python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
 
 > **Chart pages?** If this deck contains data charts (bar / line / pie / radar / etc.), run the standalone [`verify-charts`](workflows/verify-charts.md) workflow before Step 7 to calibrate coordinates. AI models routinely introduce 10–50 px errors when mapping data to pixel positions; verify-charts eliminates that class of error. Skip if no chart pages.
 
-> **Visual self-check (opt-in)?** If the user explicitly asked for a per-page visual re-pass on the SVGs ("跑一下视觉自检 / 视觉回看", "visual review", "check pages visually", etc.), run the standalone [`visual-review`](workflows/visual-review.md) workflow before Step 7. Do NOT run it by default and do NOT recommend it based on inferred model capability or deck size — trigger is user request only.
+> **Visual self-check (default-on).** The main pipeline auto-runs [`visual-review`](workflows/visual-review.md) between Executor and post-processing. Smart-skip conditions (any one bypasses the run; reason is logged in chat): user explicit opt-out (`skip visual review` / `跳过视觉自检` / `不要视觉评审`), `playwright` / chromium missing, deck has fewer than 3 pages, or `spec_lock.md` carries `visual_review: off`. Failure handling: **hard** rubric hits are fixed in place by the subagent; **soft** hits are aggregated into a report and do not block Step 7. `needs_human` rows are reported but not blocking unless the user explicitly escalates. Full gate semantics: [`workflows/visual-review.md`](workflows/visual-review.md).
 
 ---
 
