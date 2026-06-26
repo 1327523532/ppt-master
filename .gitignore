@@ -184,3 +184,12 @@ PERSONAL_NOTES.md
 # Use cloud sync (iCloud/Dropbox) for backup and multi-device access
 projects/*
 !projects/README.md
+
+# local tooling
+.kiro/
+.opencode
+apps/cowork-server/src/runtime/*
+.run.pids
+apps/cowork-ui/package-lock.json
+.playwright-mcp
+.superpowers/
