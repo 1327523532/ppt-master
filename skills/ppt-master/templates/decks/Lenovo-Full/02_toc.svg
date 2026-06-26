@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect x="0" y="0" width="1280" height="720" fill="#1E0013"/>
+  <g id="toc-header">
+    <text x="80" y="88" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#FFFFFF" font-weight="bold" letter-spacing="-2">
+      {{TITLE}}
+    </text>
+    <text x="80" y="125" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="27" fill="#FFFFFF" fill-opacity="0.8">
+      {{SUBTITLE}}
+    </text>
+  </g>
+  <g id="toc-item-1">
+    <ellipse cx="112" cy="278" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="112" y="294" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">1</text>
+    <text x="180" y="273" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_1_TITLE}}</text>
+    <text x="180" y="298" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_1_DESC}}</text>
+  </g>
+  <g id="toc-item-2">
+    <ellipse cx="112" cy="436" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="112" y="452" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">2</text>
+    <text x="180" y="431" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_2_TITLE}}</text>
+    <text x="180" y="456" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_2_DESC}}</text>
+  </g>
+  <g id="toc-item-3">
+    <ellipse cx="112" cy="594" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="112" y="610" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">3</text>
+    <text x="180" y="589" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_3_TITLE}}</text>
+    <text x="180" y="614" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_3_DESC}}</text>
+  </g>
+  <g id="toc-item-4">
+    <ellipse cx="690" cy="278" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="690" y="294" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">4</text>
+    <text x="758" y="273" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_4_TITLE}}</text>
+    <text x="758" y="298" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_4_DESC}}</text>
+  </g>
+  <g id="toc-item-5">
+    <ellipse cx="690" cy="436" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="690" y="452" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">5</text>
+    <text x="758" y="431" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_5_TITLE}}</text>
+    <text x="758" y="456" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_5_DESC}}</text>
+  </g>
+  <g id="toc-item-6">
+    <ellipse cx="690" cy="594" rx="40" ry="40" fill="#AAB1ED" stroke="none"/>
+    <text x="690" y="610" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="43" fill="#1E0013" font-weight="bold">6</text>
+    <text x="758" y="589" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="bold">{{TOC_ITEM_6_TITLE}}</text>
+    <text x="758" y="614" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="19" fill="#FFFFFF" fill-opacity="0.8">{{TOC_ITEM_6_DESC}}</text>
+  </g>
+  <g id="toc-pagenum">
+    <text x="1248" y="688" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="13" fill="#FFFFFF">{{PAGE_NUM}}</text>
+  </g>
+</svg>

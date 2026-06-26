@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Lenovo Light content — three (multi) column (04c_content_three_col.svg).
+
+  Ref: P50 "List multi column" — top-left white title, then 5 columns each
+  with: circular outline icon + colored short-title stripe + description + 3 bullets.
+  Stripe colors cycle: purple / pink / red / coral / lavender.
+
+  Note: P50 is on a dark plum background; for the Light theme we keep the structure
+  but place it on a white background (matches the rest of Lenovo-Light content pages)
+  while retaining the same column rhythm and stripe palette.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="lenovo-light-content-3col-title">
+  <title id="lenovo-light-content-3col-title">Lenovo content — three (multi) column list</title>
+
+  <!-- White background -->
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+
+  <!-- Top-left title -->
+  <text x="80" y="100" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="42" font-weight="700" letter-spacing="-1.5">
+    {{PAGE_TITLE}}
+  </text>
+  <rect x="80" y="118" width="160" height="3" fill="#4D144A"/>
+
+  <!-- 5 columns: each = circular icon + colored stripe + title + desc + 3 bullets -->
+  <!-- Column 1 (purple) -->
+  <g transform="translate(80 180)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#6D1C69" stroke-width="2.5"/>
+    <g transform="translate(30 30)" fill="none" stroke="#6D1C69" stroke-width="2.5">
+      <path d="M 10 0 L 20 6 L 20 18 L 10 24 L 0 18 L 0 6 Z"/>
+      <path d="M 10 0 L 20 6 L 10 12 L 0 6 Z"/>
+      <line x1="10" y1="12" x2="10" y2="24"/>
+    </g>
+    <rect x="0" y="120" width="200" height="38" fill="#D9C1D8"/>
+    <text x="100" y="146" text-anchor="middle" fill="#4D144A" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">{{COL_1_TITLE}}</text>
+    <text x="0" y="190" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">{{COL_1_DESC}}</text>
+    <text x="0" y="270" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_1_BULLET_1}}</text>
+    <text x="0" y="290" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_1_BULLET_2}}</text>
+    <text x="0" y="310" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_1_BULLET_3}}</text>
+  </g>
+
+  <!-- Column 2 (red) -->
+  <g transform="translate(310 180)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#871C23" stroke-width="2.5"/>
+    <g transform="translate(30 30)" fill="none" stroke="#871C23" stroke-width="2.5">
+      <path d="M 10 0 C 4 0 0 4 0 10 C 0 12 1 14 2 16 C 1 18 0 20 0 22 C 0 28 4 32 10 32 C 12 32 14 31 15 30 C 16 31 18 32 20 32 C 24 32 28 28 28 22 C 28 20 27 18 26 16 C 27 14 28 12 28 10 C 28 4 24 0 18 0 C 16 0 14 1 12 2 C 11 1 10 0 10 0 Z"/>
+      <line x1="14" y1="6" x2="14" y2="28"/>
+    </g>
+    <rect x="0" y="120" width="200" height="38" fill="#F26A52"/>
+    <text x="100" y="146" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">{{COL_2_TITLE}}</text>
+    <text x="0" y="190" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">{{COL_2_DESC}}</text>
+    <text x="0" y="270" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_2_BULLET_1}}</text>
+    <text x="0" y="290" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_2_BULLET_2}}</text>
+    <text x="0" y="310" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_2_BULLET_3}}</text>
+  </g>
+
+  <!-- Column 3 (coral/red) -->
+  <g transform="translate(540 180)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#E1251B" stroke-width="2.5"/>
+    <g transform="translate(30 30)" fill="none" stroke="#E1251B" stroke-width="2.5">
+      <path d="M 10 0 C 4 0 0 5 0 11 C 0 15 2 18 5 20 L 5 26 L 15 26 L 15 20 C 18 18 20 15 20 11 C 20 5 16 0 10 0 Z"/>
+      <line x1="7" y1="30" x2="13" y2="30"/>
+      <line x1="8" y1="34" x2="12" y2="34"/>
+    </g>
+    <rect x="0" y="120" width="200" height="38" fill="#E1251B"/>
+    <text x="100" y="146" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">{{COL_3_TITLE}}</text>
+    <text x="0" y="190" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">{{COL_3_DESC}}</text>
+    <text x="0" y="270" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_3_BULLET_1}}</text>
+    <text x="0" y="290" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_3_BULLET_2}}</text>
+    <text x="0" y="310" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_3_BULLET_3}}</text>
+  </g>
+
+  <!-- Column 4 (coral/orange) -->
+  <g transform="translate(770 180)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#F26A52" stroke-width="2.5"/>
+    <g transform="translate(30 30)" fill="none" stroke="#F26A52" stroke-width="2.5">
+      <circle cx="10" cy="10" r="3"/>
+      <circle cx="20" cy="6" r="3"/>
+      <circle cx="22" cy="20" r="3"/>
+      <circle cx="10" cy="22" r="3"/>
+      <circle cx="2" cy="14" r="3"/>
+      <line x1="10" y1="10" x2="20" y2="6"/>
+      <line x1="20" y1="6" x2="22" y2="20"/>
+      <line x1="22" y1="20" x2="10" y2="22"/>
+      <line x1="10" y1="22" x2="2" y2="14"/>
+      <line x1="2" y1="14" x2="10" y2="10"/>
+    </g>
+    <rect x="0" y="120" width="200" height="38" fill="#F2A88A"/>
+    <text x="100" y="146" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">{{COL_4_TITLE}}</text>
+    <text x="0" y="190" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">{{COL_4_DESC}}</text>
+    <text x="0" y="270" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_4_BULLET_1}}</text>
+    <text x="0" y="290" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_4_BULLET_2}}</text>
+    <text x="0" y="310" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_4_BULLET_3}}</text>
+  </g>
+
+  <!-- Column 5 (lavender) -->
+  <g transform="translate(1000 180)">
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#6D6CB0" stroke-width="2.5"/>
+    <g transform="translate(30 30)" fill="none" stroke="#6D6CB0" stroke-width="2.5">
+      <rect x="2" y="2" width="16" height="20" rx="1"/>
+      <line x1="6" y1="6" x2="14" y2="6"/>
+      <line x1="6" y1="10" x2="14" y2="10"/>
+      <line x1="6" y1="14" x2="11" y2="14"/>
+      <rect x="14" y="14" width="6" height="6"/>
+    </g>
+    <rect x="0" y="120" width="200" height="38" fill="#C9D0F0"/>
+    <text x="100" y="146" text-anchor="middle" fill="#11184F" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" font-weight="700">{{COL_5_TITLE}}</text>
+    <text x="0" y="190" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">{{COL_5_DESC}}</text>
+    <text x="0" y="270" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_5_BULLET_1}}</text>
+    <text x="0" y="290" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_5_BULLET_2}}</text>
+    <text x="0" y="310" fill="#000000" font-family="Arial, Microsoft YaHei, sans-serif" font-size="12">•  {{COL_5_BULLET_3}}</text>
+  </g>
+
+  <!-- Bottom-left footer: red Lenovo mark + copyright -->
+  <g id="lenovo-footer-mark">
+    <rect x="80" y="666.5" width="81.6" height="27.22" fill="#E1251B"/>
+    <path d="M 96.89 683.64 L 90.36 683.64 L 90.36 672.69 L 87.45 672.69 L 87.45 686.28 L 96.89 686.28 L 96.89 683.64 Z" fill="#FFFFFF"/>
+    <path d="M 106.06 683.07 C 104.85 683.96 104.16 684.18 103.07 684.18 C 102.07 684.18 101.29 683.87 100.75 683.32 C 108.09 680.27 108.09 680.27 108.09 680.27 C 107.92 679.15 107.5 678.13 106.84 677.36 C 105.87 676.24 104.44 675.64 102.71 675.64 C 99.55 675.64 97.18 677.97 97.18 681.05 C 97.18 684.22 99.56 686.46 103.03 686.46 C 104.97 686.46 106.95 685.54 107.88 684.46 L 106.06 683.07 Z M 100.55 678.97 C 101.04 678.32 101.82 677.92 102.76 677.92 C 103.79 677.92 104.58 678.52 104.98 679.39 C 99.97 681.47 99.97 681.47 99.97 681.47 C 99.83 680.41 100.11 679.57 100.55 678.97 Z" fill="#FFFFFF"/>
+    <path d="M 115.39 675.64 C 114.19 675.64 112.83 676.2 111.99 677.32 C 111.99 677.32 111.99 677.32 111.99 677.32 C 111.99 677.32 111.99 677.32 111.99 677.32 C 111.99 675.81 111.99 675.81 111.99 675.81 C 109.12 675.81 109.12 675.81 109.12 675.81 C 109.12 686.28 109.12 686.28 109.12 686.28 C 111.99 686.28 111.99 686.28 111.99 686.28 C 111.99 680.32 111.99 680.32 111.99 680.32 C 111.99 679.25 112.82 678.11 114.36 678.11 C 115.55 678.11 116.77 678.94 116.77 680.32 C 116.77 686.28 116.77 686.28 116.77 686.28 C 119.64 686.28 119.64 686.28 119.64 686.28 C 119.64 679.8 119.64 679.8 119.64 679.8 C 119.64 677.38 117.92 675.64 115.39 675.64" fill="#FFFFFF"/>
+    <path d="M 126.37 686.46 C 123.24 686.46 120.78 684.11 120.78 681.05 C 120.78 678.01 123.26 675.64 126.41 675.64 C 129.56 675.64 132.02 677.99 132.02 681.05 C 132.02 684.09 129.53 686.46 126.37 686.46 M 126.37 678.1 C 124.78 678.1 123.61 679.31 123.61 681.05 C 123.61 682.7 124.84 684 126.41 684 C 128.02 684 129.19 682.75 129.19 681.05 C 129.19 679.4 127.95 678.1 126.37 678.1" fill="#FFFFFF"/>
+    <path d="M 140.04 675.82 L 137.45 682.95 L 134.85 675.82 L 131.57 675.82 L 135.88 686.28 L 139.02 686.28 L 143.33 675.82 L 140.04 675.82 Z" fill="#FFFFFF"/>
+    <path d="M 148.48 686.46 C 145.34 686.46 142.88 684.11 142.88 681.05 C 142.88 678.01 145.35 675.64 148.51 675.64 C 151.65 675.64 154.11 677.99 154.11 681.05 C 154.11 684.09 151.64 686.46 148.48 686.46 M 148.48 678.1 C 146.87 678.1 145.71 679.31 145.71 681.05 C 145.71 682.7 146.95 684 148.51 684 C 150.12 684 151.28 682.75 151.28 681.05 C 151.28 679.4 150.04 678.1 148.48 678.1" fill="#FFFFFF"/>
+  </g>
+  <text x="170" y="685" fill="#000000" font-family="Arial, sans-serif" font-size="13.33">2026 Lenovo Internal. All rights reserved.</text>
+
+  <!-- Bottom-right: page number -->
+  <text x="1248" y="688" text-anchor="middle" fill="#000000" font-family="Arial, sans-serif" font-size="13.33">{{PAGE_NUM}}</text>
+</svg>

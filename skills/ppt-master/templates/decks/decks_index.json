@@ -1,27 +1,29 @@
 {
   "Lenovo-Dark": {
-    "summary": "Dark variant of the Lenovo dark deck — for keynote / evening-launch / dark-room presentations. Same outline as lenovo-light (cover / TOC / content / chapter / ending); surface tokens swapped via brand spec §VII.",
+    "summary": "Dark variant of the Lenovo replica deck — for keynote / evening-launch / dark-room presentations. Same 12-page outline as lenovo-light (cover / TOC / 8 content variants / chapter / ending); surface tokens swapped via brand spec §VII.",
+    "canvas_format": "ppt169",
+    "page_count": 12,
+    "primary_color": "#E1251B",
+    "theme": "dark"
+  },
+  "Lenovo-Full": {
+    "summary": "Lenovo-branded full-content decks — large multi-chapter reports, customer case libraries, internal training, full Lenovo brand language coverage with extensive chapter/content variant surface.",
     "canvas_format": "ppt169",
     "page_count": 5,
-    "primary_color": "#E1251B",
-    "theme": "dark",
-    "brand_ref": "brands/lenovo",
-    "theme_files": ["01_cover.svg", "02_toc.svg", "03_chapter.svg", "04_content.svg", "05_ending.svg"],
-    "fixed_pages": [
-      {"role": "ending", "file": "05_ending.svg", "count_toward_page_count": false, "reason": "Lenovo thanks page — appended verbatim, original file untouched and no placeholders filled in"}
-    ]
+    "primary_color": "#E1251B"
   },
   "Lenovo-Light": {
-    "summary": "Lenovo-branded enterprise light decks, product launches (ThinkPad / IdeaPad / ThinkSystem), and partner-facing materials derived from the Lenovo reference template.",
+    "summary": "Lenovo-branded enterprise decks, product launches (ThinkPad / IdeaPad / ThinkSystem), and partner-facing materials derived from the Lenovo reference template (lenovo-template-02.pptx).",
+    "canvas_format": "ppt169",
+    "page_count": 12,
+    "primary_color": "#E1251B",
+    "theme": "light"
+  },
+  "Lenovo-Starter": {
+    "summary": "Lenovo-branded enterprise light decks — product launches, partner-facing materials, internal reports. Compact starter pack with the essential 5 page types.",
     "canvas_format": "ppt169",
     "page_count": 5,
-    "primary_color": "#E1251B",
-    "theme": "light",
-    "brand_ref": "brands/lenovo",
-    "theme_files": ["01_cover.svg", "02_toc.svg", "03_chapter.svg", "04_content.svg", "05_ending.svg"],
-    "fixed_pages": [
-      {"role": "ending", "file": "05_ending.svg", "count_toward_page_count": false, "reason": "Lenovo thanks page — appended verbatim, original file untouched and no placeholders filled in"}
-    ]
+    "primary_color": "#E1251B"
   },
   "中国电信": {
     "summary": "China Telecom related briefings, 政企数字化方案, 转型规划, 内部汇报.",
