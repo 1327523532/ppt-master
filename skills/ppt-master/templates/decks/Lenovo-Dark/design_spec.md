@@ -13,6 +13,11 @@ placeholders:
   03_chapter: [CHAPTER_NUM, CHAPTER_TITLE, CHAPTER_DESC, PAGE_NUM]
   04_content: [PAGE_TITLE, CARD_1_TITLE, CARD_1_DESC, CARD_1_BULLET_1, CARD_1_BULLET_2, CARD_1_BULLET_3, CARD_2_TITLE, CARD_2_DESC, CARD_2_BULLET_1, CARD_2_BULLET_2, CARD_2_BULLET_3, CARD_3_TITLE, CARD_3_DESC, CARD_3_BULLET_1, CARD_3_BULLET_2, CARD_3_BULLET_3, LAYOUT_NAME, PAGE_NUM]
   05_ending: [PAGE_NUM]
+fixed_pages:
+  - role: ending
+    file: 05_ending.svg
+    count_toward_page_count: false
+    reason: "Lenovo thanks page — appended verbatim after the user-authored deck, original file untouched and no slots filled in"
 ---
 
 ## Selection Guidance
@@ -127,6 +132,10 @@ Mark color is invariant: red `#E1251B` shows on both light and dark surfaces. Th
 | `05_ending.svg` | ending | Dark base `#1E0113` + radial gradient overlay (`#391262 → #64131E → #831B22 → #4D144A`); "Smarter technology for all" tagline in WHITE, top-right; vertical red "Lenovo" wordmark on the right edge; giant sans-serif "thanks." in WHITE, lower-left; ref footer pattern in WHITE |
 
 All 5 SVGs hand-authored, validated by `svg_quality_checker.py --format ppt169`, and committed.
+
+### Fixed pages (do not count toward `page_count`)
+
+`05_ending.svg` is a **fixed page** — it is appended to every Lenovo deck as-is, with the original SVG untouched and none of the `placeholders` filled in by the executor. The user-confirmed `page_count` (5) covers only the content body; the ending adds 1 page on top, for a total output of 6 slides. Listed in the frontmatter `fixed_pages` block for executor discovery. Cover, TOC, chapter, and content are the four user-authored page types and they fill the entire `page_count` budget.
 
 ## VIII. SVG Page Roster
 
