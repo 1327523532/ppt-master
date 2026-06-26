@@ -260,16 +260,16 @@ Strategist chooses the library and inventory; Executor only implements. Library 
 >
 > Icons are auto-embedded by `finalize_svg.py` — no need to run `embed_icons.py` manually.
 
-**Searching for icons** — use terminal, zero token cost:
+**Searching for icons** — grep the name index, zero token cost (full SVGs are not shipped; they are fetched on demand at selection time):
 ```bash
-ls skills/ppt-master/templates/icons/chunk-filled/ | grep home
-ls skills/ppt-master/templates/icons/tabler-filled/ | grep home
-ls skills/ppt-master/templates/icons/tabler-outline/ | grep chart
-ls skills/ppt-master/templates/icons/phosphor-duotone/ | grep house
-ls skills/ppt-master/templates/icons/simple-icons/ | grep github
+grep home skills/ppt-master/templates/icons/index/chunk-filled.txt
+grep home skills/ppt-master/templates/icons/index/tabler-filled.txt
+grep chart skills/ppt-master/templates/icons/index/tabler-outline.txt
+grep house skills/ppt-master/templates/icons/index/phosphor-duotone.txt
+grep github skills/ppt-master/templates/icons/index/simple-icons.txt
 ```
 
-**Abstract concept → icon name** (names for `chunk-filled`; tabler libraries use their own equivalents — verify with `ls | grep`):
+**Abstract concept → icon name** (names for `chunk-filled`; tabler libraries use their own equivalents — verify with `grep <kw> index/<lib>.txt`):
 
 | Concept | chunk-filled | tabler-filled / tabler-outline |
 |---------|-------|-------------------------------|

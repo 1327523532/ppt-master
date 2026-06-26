@@ -55,7 +55,7 @@ def _build_replacement_g(
         return None
 
     icon_path, _base_size = embed_icons_mod.resolve_icon_path(
-        attrs['icon'], icons_dir,
+        attrs['icon'], icons_dir, fetch_fallback=True,
     )
     if not icon_path.exists():
         return None

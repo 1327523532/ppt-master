@@ -51,6 +51,14 @@ import argparse
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+# scripts/ on sys.path so the icons package resolves whether embed_icons runs
+# standalone or as a module (same idiom as svg_to_pptx/pptx_dimensions.py).
+_SCRIPTS_DIR = Path(__file__).resolve().parent.parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from icons.on_demand import fetch_missing_icon  # noqa: E402
+
 
 # Default icon directory
 DEFAULT_ICONS_DIR = Path(__file__).parent.parent.parent / 'templates' / 'icons'
@@ -179,22 +187,32 @@ def _resolve_in_dir(icon_name: str, icons_dir: Path) -> tuple[Path, float]:
     return icon_path, base_size
 
 
-def resolve_icon_path(icon_name: str, icons_dir: Path, fallback_dir: Path | None = None) -> tuple[Path, float]:
+def resolve_icon_path(
+    icon_name: str,
+    icons_dir: Path,
+    fallback_dir: Path | None = None,
+    fetch_fallback: bool = False,
+) -> tuple[Path, float]:
     """
     Resolve icon name to file path and base size, e.g. "chunk-filled/home" →
     icons_dir/chunk-filled/home.svg. "chunk/" is a backward-compat alias; an
     un-prefixed name falls back to chunk-filled/ then a legacy flat layout.
 
     Resolution is project-first: if the icon is absent under ``icons_dir`` and a
-    ``fallback_dir`` (the global library) is given, the fallback's path is
-    returned instead. Returns (path, base_size); the path may not exist when
-    neither dir has the icon.
+    ``fallback_dir`` is given, the fallback's path is returned when it has the
+    icon. When ``fetch_fallback`` is set (export time) and the icon is still
+    unresolved, it is fetched on demand from the remote base URL into
+    ``icons_dir`` and re-resolved. Returns (path, base_size); the path may not
+    exist when no source has the icon.
     """
     icon_path, base_size = _resolve_in_dir(icon_name, icons_dir)
     if fallback_dir is not None and not icon_path.exists():
         fb_path, fb_size = _resolve_in_dir(icon_name, fallback_dir)
         if fb_path.exists():
             return fb_path, fb_size
+    if fetch_fallback and not icon_path.exists():
+        if fetch_missing_icon(icon_name, icons_dir):
+            icon_path, base_size = _resolve_in_dir(icon_name, icons_dir)
     return icon_path, base_size
 
 
@@ -359,7 +377,7 @@ def generate_icon_group(attrs: dict[str, str | float], elements: list[str], styl
   </g>'''
 
 
-def process_svg_file(svg_path: Path, icons_dir: Path, dry_run: bool = False, verbose: bool = False, fallback_dir: Path | None = None) -> int:
+def process_svg_file(svg_path: Path, icons_dir: Path, dry_run: bool = False, verbose: bool = False, fallback_dir: Path | None = None, fetch_fallback: bool = False) -> int:
     """
     Process a single SVG file, replacing all icon placeholders.
 
@@ -399,7 +417,7 @@ def process_svg_file(svg_path: Path, icons_dir: Path, dry_run: bool = False, ver
         if not icon_name:
             continue
 
-        icon_path, _ = resolve_icon_path(str(icon_name), icons_dir, fallback_dir)
+        icon_path, _ = resolve_icon_path(str(icon_name), icons_dir, fallback_dir, fetch_fallback)
         elements, style, base_size = extract_paths_from_icon(icon_path)
         color = resolve_icon_color(attrs, style)
         

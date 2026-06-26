@@ -157,14 +157,14 @@ See [`../templates/icons/README.md`](../templates/icons/README.md) for the curre
 > **After all eight confirmations are approved — when writing `design_spec.md` §VI / `spec_lock.md`**, then materialize the icon inventory:
 >
 > 3. Enumerate the concepts the deck actually needs (home, chart, users, …) based on the confirmed outline.
-> 4. Search for each concept's filename in the chosen library: `ls skills/ppt-master/templates/icons/<chosen-library>/ | grep <keyword>`
+> 4. Search for each concept's filename in the chosen library: `grep <keyword> skills/ppt-master/templates/icons/index/<chosen-library>.txt` (the full SVGs are not shipped — only this name index; the chosen icons are fetched on demand by `icon_sync.py`)
 > 5. Use the verified filename (without `.svg`) as the icon name; always include the library prefix (e.g., `chunk-filled/home`).
 > 6. **Copy each chosen icon into the project as you confirm it** — `python3 skills/ppt-master/scripts/icon_sync.py <project_path> <lib/name> [<lib/name> …]`. This populates `<project>/icons/<lib>/` (the set the Executor embeds from) and, more importantly, **validates existence on the spot**.
 > 7. List the final icon inventory and chosen library in `design_spec.md` §VI; record the same in `spec_lock.md icons` (including `stroke_width` for stroke-style libraries). Executor may only use icons from this list.
 >
-> 🚧 **GATE — missing icon = re-pick now**: if `icon_sync.py` reports any name as missing (non-zero exit), that icon is not in the library — re-pick a real filename via `ls … | grep`, fix `§VI` / `spec_lock.md`, and re-run until it exits clean. Never carry a missing icon forward to generation. Over-copying candidates is harmless — finalize embeds only the icons actually referenced by `<use data-icon>`.
+> 🚧 **GATE — missing icon = re-pick now**: if `icon_sync.py` reports any name as missing (non-zero exit), that icon is not in the library — re-pick a real filename via `grep <kw> index/<lib>.txt`, fix `§VI` / `spec_lock.md`, and re-run until it exits clean. Never carry a missing icon forward to generation. Over-copying candidates is harmless — finalize embeds only the icons actually referenced by `<use data-icon>`.
 >
-> **Do NOT preload any index file** — when the inventory step arrives, use `ls | grep` to search on demand with zero token cost.
+> **Do NOT read the whole index file into context** — when the inventory step arrives, `grep <kw> index/<lib>.txt` to search on demand with zero token cost; never cat the full index.
 
 ### g. Typography Plan Confirmation (Font + Size)
 
