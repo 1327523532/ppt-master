@@ -1,6 +1,6 @@
 {
   "Lenovo-Dark": {
-    "summary": "Dark variant of the Lenovo replica deck — for keynote / evening-launch / dark-room presentations. Same outline as lenovo-light (cover / TOC / content / chapter / ending); surface tokens swapped via brand spec §VII.",
+    "summary": "Dark variant of the Lenovo dark deck — for keynote / evening-launch / dark-room presentations. Same outline as lenovo-light (cover / TOC / content / chapter / ending); surface tokens swapped via brand spec §VII.",
     "canvas_format": "ppt169",
     "page_count": 5,
     "primary_color": "#E1251B",
@@ -12,7 +12,7 @@
     ]
   },
   "Lenovo-Light": {
-    "summary": "Lenovo-branded enterprise decks, product launches (ThinkPad / IdeaPad / ThinkSystem), and partner-facing materials derived from the Lenovo reference template.",
+    "summary": "Lenovo-branded enterprise light decks, product launches (ThinkPad / IdeaPad / ThinkSystem), and partner-facing materials derived from the Lenovo reference template.",
     "canvas_format": "ppt169",
     "page_count": 5,
     "primary_color": "#E1251B",

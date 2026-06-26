@@ -185,6 +185,10 @@ PERSONAL_NOTES.md
 projects/*
 !projects/README.md
 
+lenovo-res/
+examples/lenovo_deepseek-gpt-6p_ppt169_20260626/
+exports/
+
 # local tooling
 .kiro/
 .opencode
@@ -193,3 +197,4 @@ apps/cowork-server/src/runtime/*
 apps/cowork-ui/package-lock.json
 .playwright-mcp
 .superpowers/
+
