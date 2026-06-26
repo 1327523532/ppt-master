@@ -6,5 +6,9 @@
   "google": {
     "summary": "Google brand identity — multi-product corporate decks, developer events (Google I/O style), education and training in the Google ecosystem",
     "primary_color": "#4285F4"
+  },
+  "lenovo": {
+    "summary": "Lenovo brand identity — global enterprise decks, product launches (ThinkPad / IdeaPad / ThinkSystem), internal communications, partner-facing materials",
+    "primary_color": "#E1251B"
   }
 }
