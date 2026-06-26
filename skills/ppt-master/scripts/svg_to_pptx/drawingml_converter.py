@@ -454,7 +454,12 @@ def convert_svg_to_slide_shapes(
     # both ignore data-icon, so without expansion icons would silently drop.
     # The on-disk finalize_svg pipeline does the same expansion for svg_final/;
     # running this here makes the two pipelines behaviourally aligned.
-    icons_dir = Path(__file__).resolve().parent.parent.parent / 'templates' / 'icons'
+    # Project-first: prefer the deck's own icons/ (synced + custom + on-demand
+    # fetch target) so the in-memory path matches finalize_svg; the global dir,
+    # which no longer ships SVGs, is only a transitional fallback.
+    global_icons_dir = Path(__file__).resolve().parent.parent.parent / 'templates' / 'icons'
+    project_icons_dir = svg_path.resolve().parent.parent / 'icons'
+    icons_dir = project_icons_dir if project_icons_dir.is_dir() else global_icons_dir
     if icons_dir.exists():
         from .use_expander import expand_use_data_icons
         expanded = expand_use_data_icons(root, icons_dir)

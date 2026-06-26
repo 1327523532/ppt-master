@@ -131,11 +131,15 @@ def finalize_project(
     svg_output = project_dir / 'svg_output'
     svg_final = project_dir / 'svg_final'
     # Project-first: embed from the deck's own icons/ (synced library icons +
-    # any custom icons), falling back to the global library per-icon.
+    # any custom icons). The full SVG libraries no longer ship with the skill,
+    # so a missing icon is fetched on demand into the project icons dir — which
+    # must therefore be the resolve target, never the global dir (else fetch
+    # would pollute the package). The global dir stays a (transitional) fallback.
     global_icons_dir = Path(__file__).parent.parent / 'templates' / 'icons'
     project_icons_dir = project_dir / 'icons'
-    icons_dir = project_icons_dir if project_icons_dir.is_dir() else global_icons_dir
-    icons_fallback_dir = global_icons_dir if icons_dir != global_icons_dir else None
+    project_icons_dir.mkdir(parents=True, exist_ok=True)
+    icons_dir = project_icons_dir
+    icons_fallback_dir = global_icons_dir if global_icons_dir.is_dir() else None
 
     # Check if svg_output exists
     if not svg_output.exists():
@@ -171,7 +175,7 @@ def finalize_project(
             safe_print("[1/4] Embedding icons...")
         icons_count = 0
         for svg_file in svg_final.glob('*.svg'):
-            count = embed_icons_in_file(svg_file, icons_dir, dry_run=False, verbose=False, fallback_dir=icons_fallback_dir)
+            count = embed_icons_in_file(svg_file, icons_dir, dry_run=False, verbose=False, fallback_dir=icons_fallback_dir, fetch_fallback=True)
             icons_count += count
         if not quiet:
             if icons_count > 0:
