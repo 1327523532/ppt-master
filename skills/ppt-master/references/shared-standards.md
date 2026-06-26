@@ -169,7 +169,12 @@ One offending character invalidates the file and aborts export. Numeric refs (`&
 
 ## 4. Basic SVG Rules
 
-- **viewBox** must match the canvas dimensions (`width`/`height` must match `viewBox`)
+- **Root `<svg>` attributes are mandatory** — every page-level SVG MUST declare all three:
+  - `viewBox="0 0 W H"` (the canvas dimensions)
+  - `width="W"` matching viewBox width
+  - `height="H"` matching viewBox height
+  Omitting `width` or `height` causes the live preview to render at the browser's default size (typically `300×150`), breaking the preview's coordinate system. PowerPoint's internal SVG renderer tolerates the omission, but the in-browser preview does not — so the preview thumbnail, element selection, drag-to-move, and arrow-key nudge all become unusable. The PPTX export still works, so this is a preview-only regression that does not surface in `svg_quality_checker.py`'s pass/fail unless explicitly checked.
+- **viewBox** must match the canvas dimensions (the three values above must agree)
 - **Background**: Use `<rect>` to define the page background color
 - **`<tspan>`** has two purposes: (1) manual line breaks (use `dy` or explicit `y`); (2) inline run formatting on the same line (color/weight/size). `<foreignObject>` is FORBIDDEN. See "Single logical line" rule below.
 - **Fonts**: every `font-family` stack MUST end with a pre-installed family (Microsoft YaHei / SimSun / Arial / Times New Roman / Consolas …); `@font-face` is FORBIDDEN. Full rule: [`strategist.md §g`](strategist.md).

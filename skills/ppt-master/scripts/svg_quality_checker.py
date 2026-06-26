@@ -367,6 +367,26 @@ class SVGQualityChecker:
                     f"viewBox mismatch: expected '{expected_viewbox}', got '{viewbox}'"
                 )
 
+        # Mandatory root <svg> width/height — without them the live preview
+        # renders at the browser default (typically 300x150) and breaks the
+        # preview's coordinate system (drag-to-move, arrow-key nudge, etc.).
+        # PPTX export still works, which is why this was historically a silent
+        # regression. See shared-standards.md §4 for the rule.
+        width_match = re.search(r'<svg\b[^>]*\bwidth="(\d+)"', content)
+        height_match = re.search(r'<svg\b[^>]*\bheight="(\d+)"', content)
+        if not width_match:
+            result['errors'].append(
+                "Missing width attribute on root <svg> "
+                "(required by shared-standards.md §4; preview will render at "
+                "browser default size without it)"
+            )
+        if not height_match:
+            result['errors'].append(
+                "Missing height attribute on root <svg> "
+                "(required by shared-standards.md §4; preview will render at "
+                "browser default size without it)"
+            )
+
     def _check_forbidden_elements(self, content: str, result: Dict):
         """Check forbidden elements (blocklist)"""
         content_lower = content.lower()
