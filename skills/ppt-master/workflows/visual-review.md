@@ -1,10 +1,10 @@
 ---
-description: Per-page rubric-based visual self-review via parallel subagents. Run after Executor, before post-processing.
+description: Mandatory per-page rendered visual verification via parallel subagents. Run after Executor static checks, before post-processing.
 ---
 
 # Visual Review Workflow
 
-> Standalone post-generation step. Goal: reduce human iteration by letting AI subagents visually self-check each rendered slide against a fixed rubric and apply atomic position/spacing fixes.
+> Mandatory post-generation step in the main pipeline. Goal: reduce human iteration by letting AI subagents visually self-check each rendered slide against a fixed rubric and apply atomic position/spacing fixes.
 >
 > Reads `<project>/svg_output/<page>.svg` and a pre-rendered PNG of each slide, then either applies a fix or flags `needs_human`. **Never touches** brand decisions, layout structure, or other files.
 >
@@ -12,16 +12,17 @@ description: Per-page rubric-based visual self-review via parallel subagents. Ru
 
 ## Positioning
 
-This is an **optional auxiliary loop**, opt-in only. The main pipeline (SKILL.md Step 1–7) does not invoke it; trigger only when the user explicitly asks for a visual re-pass on the generated SVGs before export.
+This is a **mandatory verification gate** for the main pipeline. Run it after Executor has generated all SVGs and `svg_quality_checker.py` has passed, before post-processing/export. It is not equivalent to opening live preview; live preview is only the rendering surface. The gate is complete only after per-page findings and the aggregate summary are written under `<project>/.review/`.
 
-**Token cost**: each batch subagent re-reads the rubric + `design_spec.md` + `spec_lock.md` and processes K SVG+PNG pairs. For a 20-page deck with K=5, expect on the order of 100–150K additional input tokens on top of the main generation run.
+Review artifacts under `.review/` are evidence of this workflow having run, not a patch surface. Do **not** hand-edit them to satisfy export blockers unless the user explicitly asks for a repo-level compatibility fix (for example, a legacy enum migration in the review schema itself).
+
+**Token cost**: each batch subagent re-reads the rubric + `design_spec.md` + `spec_lock.md` and processes K SVG+PNG pairs. For a 20-page deck with K=5, expect on the order of 100–150K additional input tokens on top of the main generation run. This cost is part of the default quality gate.
 
 ## When to Run
 
 - Executor (SKILL.md Step 6) has finished all pages
 - `svg_quality_checker.py` has passed
 - Post-processing (`finalize_svg.py`, `svg_to_pptx.py`) has **not** yet run
-- The user has explicitly requested visual review
 
 For decks containing data charts, run [`verify-charts`](./verify-charts.md) first — visual-review focuses on visual rhythm / collision / alignment, not chart coordinate math.
 
@@ -30,7 +31,6 @@ For decks containing data charts, run [`verify-charts`](./verify-charts.md) firs
 - The project has no `svg_output/<page>.svg` files yet — finish Executor first
 - `svg_quality_checker.py` has not been run or has failed — fix static violations first
 - User has already applied annotations via `live-preview` workflow and is in a fixed-edit loop — describe changes directly, do not re-trigger rubric
-- The user has not asked for it — do not auto-invoke based on inferred model capability or deck size
 
 ---
 
@@ -42,11 +42,11 @@ pip install playwright
 python3 -m playwright install chromium
 
 # 2. live-preview server running for this project (provides inlined SVG fetch)
-python3 skills/ppt-master/scripts/svg_editor/server.py <project_path> --no-browser
+python3 skills/ppt-master/scripts/svg_editor/server.py <project_path> --no-browser --daemon --wait-ready
 # (single instance per project — if it's already running, skip)
 ```
 
-The renderer (`visual_review.py`) does **not** auto-start the live-preview server. It expects the server to be reachable at `http://localhost:5050` (override with `--server-url`).
+The renderer (`visual_review.py`) does **not** auto-start the live-preview server. It expects the server to be reachable at `http://localhost:5050` (override with `--server-url`). Do not run `svg_editor/server.py` in foreground during this workflow: it is a long-running Flask server and will keep the tool call open until timeout.
 
 > **Why playwright, not cairosvg**: cairo's text API has no font-fallback chain, so CJK characters render as tofu boxes for any deck whose font-family list relies on system fallback (Microsoft YaHei / PingFang SC / etc.). Playwright drives a real chromium and produces output identical to what the live-preview browser shows — the only fidelity-preserving option for bilingual decks.
 
@@ -58,7 +58,7 @@ The renderer (`visual_review.py`) does **not** auto-start the live-preview serve
 python3 skills/ppt-master/scripts/visual_review.py <project_path>
 ```
 
-This writes one PNG per page to `<project_path>/.preview/<page>.png` at 1280×720, with `<use data-icon>` inlined and `<image href>` resolved exactly as the live-preview browser sees them. Renders are serialized via a project-local file lock — safe to invoke concurrently.
+This writes one PNG per page to `<project_path>/.preview/<page>.png` at 1280×720, with `<use data-icon>` inlined and `<image href>` resolved exactly as the live-preview browser sees them. It also writes `<project_path>/.review/render_manifest.json` with current SVG/PNG hashes. Renders are serialized via a project-local file lock — safe to invoke concurrently.
 
 Exit codes:
 
@@ -101,7 +101,13 @@ The orchestrator prompt must be self-contained and is the **single** place where
 
 ## Step 3 — Aggregate findings
 
-The orchestrator emits the aggregate Markdown table back to you (the main agent):
+The orchestrator emits the aggregate Markdown table back to you (the main agent), but the main agent must not hand-write the export-blocker summary file. First verify that every page JSON follows the required schema and copies the page's `render.render_id`, `render.svg_sha256`, and `render.png_sha256` from the current render manifest, then run the aggregator:
+
+```bash
+python3 skills/ppt-master/scripts/visual_review_aggregate.py <project_path>
+```
+
+The script writes both `<project>/.review/visual_review_summary.md` and `<project>/.review/visual_review_report.json`. The Markdown table has this shape:
 
 ```
 | page | role | status | hard_hits | soft_hits | fixes_applied | needs_human_reason |
@@ -118,6 +124,14 @@ Statuses:
 
 Plus a brand-token aggregate at `<project>/.review/brand_review.json` if any §1.1 escalations occurred — review this once at the end of the run, not per page.
 
+The orchestrator (or the main agent on hosts without subagent primitives) MUST provide per-page JSON files, then `visual_review_aggregate.py` MUST persist the aggregate table to:
+
+```text
+<project>/.review/visual_review_summary.md
+```
+
+This file is the Step 7 export blocker artifact. A chat-only summary, hand-written summary, or summary generated without the current render manifest hash does not count.
+
 ---
 
 ## Step 4 — Decide next move
@@ -125,18 +139,28 @@ Plus a brand-token aggregate at `<project>/.review/brand_review.json` if any §1
 For each row in the table:
 
 - `ok` / `fixed` — no action; the SVG has been updated in-place (originals are at `<project>/.review/backup/<page>.iter<N>.svg`)
-- `needs_human` — read the page's JSON `needs_human_items[].suggested_fix_summary`, decide with the user whether to apply or defer
+- `needs_human` — read the page's JSON `needs_human_items[].suggested_fix_summary`, decide with the user whether to apply or defer, then persist the decision into that page JSON as:
+
+```json
+{
+  "user_decision": {
+    "status": "resolved" | "deferred",
+    "note": "optional short note"
+  }
+}
+```
+
 - `render_failed` — re-run `visual_review.py` for that page only (`--pages <token>`); if it persists, hand off to manual review
 - `prereq_failed` — go back and run `svg_quality_checker.py`
 
+Do not resolve any of the above by fabricating a cleaner `.review/<page>.json`, rewriting the summary file, or mass-normalizing statuses just to pass export. The review files may be edited only as the natural output of the visual-review workflow, or because the user explicitly requested a compatibility/schema fix in the repository itself.
+
 If `brand_review.json` is non-empty, that's a single decision applied across the deck (e.g., bump footer text color from `#6E7681` to `#8B949E` — one change, every page benefits). Do this once, then optionally re-run visual-review for the affected pages only.
 
-After the table is clean, continue to post-processing per [`SKILL.md`](../SKILL.md) Step 7:
+After the table is clean and `visual_review_aggregate.py` has written `<project>/.review/visual_review_summary.md`, continue to post-processing per [`SKILL.md`](../SKILL.md) Step 7:
 
 ```bash
-python3 skills/ppt-master/scripts/total_md_split.py <project_path>
-python3 skills/ppt-master/scripts/finalize_svg.py <project_path>
-python3 skills/ppt-master/scripts/svg_to_pptx.py <project_path>
+python3 skills/ppt-master/scripts/review_and_export.py <project_path>
 ```
 
 ---
@@ -148,6 +172,8 @@ python3 skills/ppt-master/scripts/svg_to_pptx.py <project_path>
 - **Iteration budget**: default 1 iteration. Bumping to 2 doubles render cost and roughly triples token cost. Only worth it for high-stakes / final-cut decks.
 - **Don't-touch (rubric §3)** is hard-enforced by subagents. If you want the subagent to e.g. change a brand color, that is **out of scope** — make the change manually first, then re-render & re-review.
 - **Backups**: every modified SVG has a `.review/backup/<page>.iter<N>.svg` rollback anchor. Restore by `cp`.
+- **Code-level export gate**: `finalize_svg.py` and `svg_to_pptx.py` now hard-fail when `.review/render_manifest.json`, `.review/visual_review_summary.md`, or any per-page `.review/<page>.json` is missing, blocking, unresolved, stale, or not hash-linked to the current rendered SVG/PNG. `review_and_export.py` is the normal checked export entry point.
+- **No artifact laundering**: if that code-level gate fires, do not hand-edit `.review/` files to satisfy it. Re-run the real review path or stop and surface the blocker.
 - **The rubric is not the designer**: it catches collisions, drift, and rhythm errors — it does not improve a fundamentally weak layout. If 80%+ of pages come back `needs_human`, the design spec or the executor's choice of layout patterns is the root cause, not this workflow.
 - **Playwright output discipline**: when an agent uses the playwright MCP tool `browser_take_screenshot` directly (outside the `visual_review.py` script), the `filename` parameter is resolved against the CWD (typically the repo root) — passing a bare relative path will create stray directories inside the repository. Always pass an absolute path:
   - One-off probe / ad-hoc inspection → `/tmp/probe-<topic>-<n>.png`

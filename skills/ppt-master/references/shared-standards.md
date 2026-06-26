@@ -209,6 +209,8 @@ One logical line — even with mixed colors/weights/sizes — MUST be one `<text
 </text>
 ```
 
+**PPTX-safe wrapping is authored, not delegated**: SVG has no native text box width. A single long `<text>` becomes a single PowerPoint text frame, and Office may measure CJK/Latin fallback fonts differently from the browser. For any line that is close to the available width, author the intended line breaks with line-start `<tspan x="..." dy="...">` elements. This applies to titles and subtitles as much as body copy. Do not trust `spAutoFit`, PowerPoint auto-wrap, or the live browser preview to fix long CJK/English mixed lines.
+
 ❌ **DON'T** — same-line column jump via `<tspan x="...">`:
 
 ```xml
@@ -340,6 +342,10 @@ Full reference: [`animations.md`](animations.md).
 - NEVER use `--only` (it suppresses one of the two output files)
 
 > Source-directory split: by default `svg_to_pptx.py` reads `svg_output/` for the native pptx (preserves icon `<use>`, image `preserveAspectRatio` → `srcRect`, rounded rect `rx/ry` → `prstGeom roundRect`) and `svg_final/` for the legacy/preview pptx (PowerPoint's internal SVG parser needs the flattened form). Pass `-s output` or `-s final` only when you specifically want both products to read from a single source.
+
+**Post-export check is part of export quality.** The native PPTX export runs `pptx_export_checker.py` automatically. It converts the generated PPTX back to flat SVG and flags text boxes that fall out of canvas or overlap substantially after conversion. A failure means the source SVG needs more conservative text layout, usually smaller type, wider spacing, or explicit line breaks. Use `--skip-post-export-check` only for diagnosing false positives, and disclose that skip in the final response.
+
+**Checked export is the normal path.** Use `review_and_export.py` for final delivery. It runs the static SVG checker, verifies hash-linked visual-review artifacts via `visual_review_aggregate.py`, then runs notes split, finalize, native PPTX export, and the post-export PPTX checker. Direct `finalize_svg.py` / `svg_to_pptx.py` invocations are for debugging or recovery only, and still enforce the same visual-review gate.
 
 **Re-run rule**: Any change to `svg_output/` after post-processing requires re-running Steps 2-3. Step 1 only re-runs if `notes/total.md` changed.
 

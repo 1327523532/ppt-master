@@ -29,6 +29,8 @@ Each review subagent processes a **batch** of pages (see §6.1 for batch sizing)
 
 The subagent reads inputs 2–4 **once** at the start of its turn, then iterates over the page batch sequentially (one page at a time): apply the rubric → write `<project>/.review/<page>.json` → move on. This is the core token-saving move — three fixed documents are read N/K times instead of N times.
 
+The `.review/` directory is writeable only so the workflow can persist authentic findings. It is **not** a bypass surface: subagents and orchestrators must never fabricate "passing" review files, rewrite statuses, or synthesize a summary merely to satisfy export.
+
 ## §1 Hard rules (fix every hit)
 
 | # | Category | Trigger | Permitted fix |
@@ -88,6 +90,7 @@ Hard boundary, equal weight to §1.
 - **Content** — do not add or remove copy; only adjust position, font-size (within ramp), spacing, letter-spacing, alignment, scrim
 - **Other files** — never edit `design_spec.md` / `spec_lock.md` / `animations.json` / `image_prompts.json` / `images/` / other pages' SVGs
 - **Atomicity** — one edit per fix, no bulk multi-element replacements
+- **Review artifact laundering** — never change a page's status, `user_decision`, summary row, backup file, or file timestamp just to convert a blocked export into a passing one. Review JSON may record what happened in this rubric; it must not be used to pretend the rubric happened.
 
 If a "violation" requires reinterpreting `design_spec.md` to fix → mark `needs_human` with a one-line `suggested_fix_summary`.
 
@@ -136,12 +139,23 @@ The backup path is recorded in every finding's `backup_path` field. Backups are 
 
 ## §5 Output schema
 
-Each subagent writes exactly one file to `<project>/.review/<page>.json`:
+Each subagent writes exactly one file to `<project>/.review/<page>.json`.
+The `schema` and `render` fields are mandatory export-gate evidence. Copy the
+`render_id` and hashes from the matching page entry in
+`<project>/.review/render_manifest.json`; do not invent or omit them.
 
 ```json
 {
-  "page": "02_three_steps.svg",
+  "schema": "ppt-master.visual-review.page.v1",
+  "page": "02_three_steps",
   "page_role": "content",
+  "render": {
+    "render_id": "<copied from render_manifest.json pages.02_three_steps.render_id>",
+    "svg_file": "svg_output/02_three_steps.svg",
+    "svg_sha256": "<copied from render_manifest.json>",
+    "png_file": ".preview/02_three_steps.png",
+    "png_sha256": "<copied from render_manifest.json>"
+  },
   "status": "ok" | "fixed" | "needs_human" | "render_failed" | "prereq_failed",
   "iterations_run": 1,
   "screenshot_paths": [
@@ -176,6 +190,10 @@ Each subagent writes exactly one file to `<project>/.review/<page>.json`:
       "suggested_fix_summary": "Hero subtitle declared in spec §IX.4 missing; add a <text> at (80,496) per design language"
     }
   ],
+  "user_decision": {
+    "status": "resolved" | "deferred",
+    "note": "optional short note after the user explicitly decides how to handle a needs_human item"
+  },
   "design_intent_check": {
     "spec_says": "TL;DR — emphasize 意图 as the core abstraction",
     "render_delivers": true,
@@ -184,7 +202,9 @@ Each subagent writes exactly one file to `<project>/.review/<page>.json`:
 }
 ```
 
-`needs_human_items` must include a `suggested_fix_summary` for every entry — never bare problem descriptions.
+`page` is the SVG filename stem, not the `.svg` filename. `needs_human_items` must include a `suggested_fix_summary` for every entry — never bare problem descriptions.
+
+`user_decision` is optional and is written only after the user explicitly resolves or defers a `needs_human` item. Export gate treats bare `needs_human` as blocking; if the user says "defer this" or approves a manual workaround, persist that decision here before export.
 
 ## §6 Dispatch & messaging contract
 

@@ -22,7 +22,8 @@ Exit codes (per references/visual-review.md §7):
     3 — rendering backend (playwright + chromium) missing or unable to launch
     4 — one or more page-level render failures (details in stderr)
 
-Output: JSON summary printed to stdout, PNGs written to <project>/.preview/.
+Output: JSON summary printed to stdout, PNGs written to <project>/.preview/,
+render manifest written to <project>/.review/render_manifest.json.
 """
 
 from __future__ import annotations
@@ -34,9 +35,12 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from contextlib import contextmanager
 from pathlib import Path
+
+from visual_review_manifest import render_manifest_path, update_render_manifest
 
 
 # Histogram threshold: PNG counts as "all background" if a single quantized
@@ -110,7 +114,8 @@ def fetch_slide_text(server_url: str, page_name: str, timeout: float = 5.0) -> i
     """Probe that the server can return the slide. Returns content length.
     Used only for failure detection — the actual fetch happens inside the
     browser via fetch() so the response is parsed by JS, not Python."""
-    url = f"{server_url.rstrip('/')}/api/slide/{page_name}"
+    quoted_name = urllib.parse.quote(page_name)
+    url = f"{server_url.rstrip('/')}/api/slide/{quoted_name}"
     req = urllib.request.Request(url, headers={'Accept': 'application/json'})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         payload = json.loads(resp.read().decode('utf-8'))
@@ -289,11 +294,13 @@ def main() -> int:
     summary = {
         'project': str(project_path),
         'server_url': args.server_url,
+        'render_manifest': str(render_manifest_path(project_path)),
         'rendered': sum(1 for r in records if r['ok']),
         'failed': sum(1 for r in records if not r['ok']),
         'all_background': sum(1 for r in records if r.get('all_background')),
         'pages': records,
     }
+    update_render_manifest(project_path, args.server_url, records)
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
     if summary['failed']:

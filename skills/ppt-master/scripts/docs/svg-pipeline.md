@@ -9,9 +9,37 @@ These tools cover post-processing, SVG validation, speaker notes, recorded narra
 Run these steps in order:
 
 ```bash
+python3 scripts/review_and_export.py <project_path>
+```
+
+`review_and_export.py` is the normal final-delivery path. It runs:
+
+```bash
+python3 scripts/svg_quality_checker.py <project_path>
+python3 scripts/visual_review_aggregate.py <project_path>
 python3 scripts/total_md_split.py <project_path>
 python3 scripts/finalize_svg.py <project_path>
 python3 scripts/svg_to_pptx.py <project_path>
+```
+
+It requires `.review/render_manifest.json`, `.review/<page>.json`, and
+`.review/visual_review_summary.md` to be generated from the current rendered
+SVG/PNG hashes. Direct `finalize_svg.py` / `svg_to_pptx.py` runs are for
+debugging or recovery only.
+
+## `visual_review.py`, `visual_review_aggregate.py`, `visual_review_gate.py`
+
+Visual-review artifacts are export credentials, not free-form notes.
+`visual_review.py` renders PNGs and writes `.review/render_manifest.json` with
+current SVG/PNG hashes. Page reviewers must write schema
+`ppt-master.visual-review.page.v1` JSON files that reference that manifest.
+`visual_review_aggregate.py` validates those page files and writes
+`.review/visual_review_summary.md` plus `.review/visual_review_report.json`.
+`visual_review_gate.py` is the reusable export gate and can produce a machine
+report:
+
+```bash
+python3 scripts/visual_review_gate.py <project_path> --json --write-report
 ```
 
 ## `finalize_svg.py`
@@ -40,6 +68,7 @@ python3 scripts/svg_to_pptx.py <project_path> -t none
 python3 scripts/svg_to_pptx.py <project_path> --auto-advance 3
 python3 scripts/svg_to_pptx.py <project_path> --animation mixed --animation-duration 0.8
 python3 scripts/svg_to_pptx.py <project_path> --no-merge   # strict line-fidelity mode (see below)
+python3 scripts/svg_to_pptx.py <project_path> --skip-post-export-check   # debug only
 python3 scripts/notes_to_audio.py <project_path> --voice zh-CN-XiaoxiaoNeural
 python3 scripts/svg_to_pptx.py <project_path> --recorded-narration audio
 ```
@@ -52,6 +81,7 @@ Behavior:
   - `exports/<project_name>_<timestamp>_svg.pptx` — SVG snapshot pptx for visual reference, sibling of the native pptx
   - Live preview already serves as the SVG visual reference for day-to-day use; the snapshot pptx is for distribution or frozen-state archival
 - Explicit `-o/--output` skips `backup/`; pair with `--svg-snapshot` to also emit the side-by-side `_svg.pptx` next to the chosen path
+- Native export runs `pptx_export_checker.py` by default after writing the PPTX. The checker round-trips the generated PPTX to flat SVG and blocks obvious exported text overlap / out-of-canvas issues. Fix source SVG layout and re-export when it fails. `--skip-post-export-check` is intended only for debugging suspected checker false positives.
 - Paragraph merging is enabled by default and trades some SVG line-layout fidelity for PowerPoint editability:
   - Default: mergeable paragraph blocks (same x, dy clustered around one base line-height, optional larger gap for paragraph breaks) collapse into one editable text frame with multiple `<a:p>` and precise `<a:lnSpc>` / `<a:spcBef>`. Resizing the box reflows text inside it.
   - With `--no-merge`: every dy-stacked `<tspan>` becomes its own text frame — exact SVG line layout is preserved but a 12-line paragraph is 12 separate textboxes

@@ -23,6 +23,8 @@ from .pptx_builder import create_pptx_with_native_svg
 from .pptx_narration import NARRATION_EXTENSIONS, find_narration_files, probe_audio_duration
 from .pptx_slide_xml import TRANSITIONS
 from .animation_config import load_animation_config, validate_animation_config
+from visual_review_gate import enforce_visual_review_gate
+from pptx_export_checker import check_pptx
 
 try:
     from pptx_animations import ANIMATIONS as _ANIMATIONS
@@ -247,12 +249,18 @@ Recorded narration:
     parser.add_argument('--workers', type=int, default=None,
                         help='Parallel workers for SVG→PNG pre-rendering. '
                              'Default: min(cpu, pages, 8). Set 1 for sequential.')
+    parser.add_argument('--skip-post-export-check', action='store_true',
+                        help='Skip the exported PPTX text-overlap sanity check.')
+    parser.add_argument('--keep-post-export-check-artifacts', action='store_true',
+                        help='Keep the PPTX round-trip SVG artifacts when running the post-export check.')
 
     args = parser.parse_args(argv)
 
     project_path = Path(args.project_path)
     if not project_path.exists():
         print(f"Error: Path does not exist: {project_path}")
+        return 1
+    if not enforce_visual_review_gate(project_path, "svg_to_pptx.py"):
         return 1
 
     try:
@@ -584,6 +592,20 @@ Recorded narration:
             **shared_kwargs,
         )
         success = success and ok
+        if ok and not args.skip_post_export_check:
+            errors, artifact_dir = check_pptx(
+                native_path,
+                keep_artifacts=args.keep_post_export_check_artifacts,
+            )
+            if artifact_dir and verbose:
+                print(f"  Post-export check artifacts: {artifact_dir}")
+            if errors:
+                print("Error: Post-export PPTX layout check failed", file=sys.stderr)
+                for item in errors[:30]:
+                    print(f"  {item}", file=sys.stderr)
+                if len(errors) > 30:
+                    print(f"  ... and {len(errors) - 30} more", file=sys.stderr)
+                success = False
 
     # --- SVG image reference version ---
     if gen_legacy:

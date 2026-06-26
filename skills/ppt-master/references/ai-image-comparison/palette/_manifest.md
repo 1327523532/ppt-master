@@ -15,7 +15,7 @@
 |---|---|
 | Purpose | Palette comparison — cool-corporate |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -32,7 +32,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — warm-earth |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -49,7 +49,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — tech-neon |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -66,7 +66,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, solid fl
 |---|---|
 | Purpose | Palette comparison — editorial-classic |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -83,7 +83,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — macaron |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -100,7 +100,7 @@ Clean flat vector illustration with bold rounded geometric shapes (slightly soft
 |---|---|
 | Purpose | Palette comparison — mono-ink |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -117,7 +117,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — vivid-launch |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -134,7 +134,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — dark-cinematic |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -151,7 +151,7 @@ Clean flat vector illustration with bold geometric shapes (subtle 8%-opacity glo
 |---|---|
 | Purpose | Palette comparison — duotone |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -168,7 +168,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — nature-organic |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -185,7 +185,7 @@ Clean flat vector illustration with bold but slightly organic geometric shapes, 
 |---|---|
 | Purpose | Palette comparison — jewel-tone |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -202,7 +202,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — frost-ice |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -219,7 +219,7 @@ Clean flat vector illustration with bold geometric shapes, sharp edges, no gradi
 |---|---|
 | Purpose | Palette comparison — sunset-gradient |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 
@@ -236,7 +236,7 @@ Flat vector illustration with bold geometric shapes layered over a smooth atmosp
 |---|---|
 | Purpose | Palette comparison — earthy-dusty |
 | Aspect ratio | 16:9 |
-| Status | Generated |
+| Status | Pending |
 
 **Prompt**:
 

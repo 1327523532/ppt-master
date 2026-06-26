@@ -24,6 +24,7 @@ Decks carry the full set of segments (identity + structure + middle). Minimum sc
 ---
 deck_id: <slug>
 kind: deck
+template_role: replica | brand_shell   # optional; default replica. brand_shell = brand background/logo only.
 summary: <one-line use cases>
 canvas_format: ppt169
 page_count: 5

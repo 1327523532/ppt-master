@@ -17,7 +17,7 @@ Each subdirectory contains:
 
 - `_subject.md` — the controlled variables and the subject used for this set
 - `_manifest.json` — generation manifest (status=Pending), runnable via `image_gen.py --manifest`
-- `<dimension>.png` — the generated image for each rendering / palette / type
+- `<dimension>.png` — generated comparison images, when retained. The `palette/` set intentionally keeps only text manifests to reduce skill size.
 
 > `page_role: hero_page` images don't pick an `image_type` — they use the four composition primitives in [`image-generator.md`](../image-generator.md) §4.1 directly (single-subject / portrait / typographic / atmospheric). The 11 types in `type/` are for local infographic blocks only.
 
@@ -59,7 +59,7 @@ Generated images land in the corresponding subdirectory. Each item's `status` in
 | If you are deciding... | Look at |
 |---|---|
 | Which rendering to lock in Strategist h.5 | `rendering/` — scan all 20 side by side; pick the visual temperament that matches the deck |
-| Which palette pairs best with your chosen rendering | `palette/` — see how color behavior shifts the same subject |
+| Which palette pairs best with your chosen rendering | `references/image-palettes/_index.md` plus the selected palette file; `palette/` keeps regeneration manifests only |
 | Which type fits a specific image's purpose | `type/` — match the internal composition to the page's content shape |
 
 > The three sets are intentionally independent. When deciding rendering, do not look at the palette set — its varying colors will distort your judgment of pure rendering style.

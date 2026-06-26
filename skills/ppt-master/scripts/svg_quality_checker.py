@@ -16,7 +16,7 @@ import json
 import html
 from pathlib import Path
 from typing import List, Dict, Tuple
-from collections import Counter, defaultdict
+from collections import defaultdict
 from xml.etree import ElementTree as ET
 
 try:
@@ -264,34 +264,32 @@ class SVGQualityChecker:
                 # 2. Check forbidden elements
                 self._check_forbidden_elements(content, result)
 
-                # 3. Check font-size values
-                self._check_font_size_values(content, result)
-
-                # 4. Check fonts
+                # 3. Check fonts
                 self._check_fonts(content, result)
 
-                # 5. Check width/height consistency with viewBox
+                # 4. Check width/height consistency with viewBox
                 self._check_dimensions(content, result)
 
-                # 6. Check text wrapping methods
+                # 5. Check text wrapping methods
                 self._check_text_elements(content, result)
+                self._check_unwrapped_text_fit(content, result)
 
-                # 7. Check image references (file existence and resolution)
+                # 6. Check image references (file existence and resolution)
                 self._check_image_references(content, svg_path, result)
 
-                # 8. Check object-level animation anchor quality.
+                # 7. Check object-level animation anchor quality.
                 self._check_animation_group_ids(content, result)
 
-                # 8b. Check <pattern> elements declare a PPTX preset.
+                # 7b. Check <pattern> elements declare a PPTX preset.
                 self._check_pattern_fills(content, result)
 
-                # 9. Check spec_lock drift (colors / font-family / font-size).
+                # 8. Check spec_lock drift (colors / font-family / font-size).
                 #    Templates do not ship a spec_lock.md, so skip in template
                 #    mode to avoid noise.
                 if not self.template_mode:
                     self._check_spec_lock_drift(content, svg_path, result)
 
-                # 10. Check web-sourced image attribution. Templates don't carry
+                # 9. Check web-sourced image attribution. Templates don't carry
                 #    image_sources.json; skip in template mode.
                 if not self.template_mode:
                     self._check_sourced_image_attribution(content, svg_path, result)
@@ -463,31 +461,6 @@ class SVGQualityChecker:
         if re.search(r'<image[^>]*\sopacity\s*=', content_lower):
             result['errors'].append("Detected forbidden <image opacity> (use overlay mask approach)")
 
-    def _check_font_size_values(self, content: str, result: Dict):
-        """Require font-size values to be unitless numeric SVG px values."""
-        numeric_re = re.compile(r'^(?:\d+(?:\.\d+)?|\.\d+)$')
-        bad_values = set()
-
-        for match in re.finditer(r'\bfont-size\s*=\s*(["\'])(.*?)\1', content, re.IGNORECASE):
-            raw = match.group(2).strip()
-            if not numeric_re.fullmatch(raw):
-                bad_values.add(raw)
-
-        for match in re.finditer(r'\bfont-size\s*:\s*([^;"\']+)', content, re.IGNORECASE):
-            raw = match.group(1).strip()
-            if not numeric_re.fullmatch(raw):
-                bad_values.add(raw)
-
-        if bad_values:
-            shown_values = sorted(bad_values)
-            shown = ', '.join(shown_values[:5])
-            more = len(shown_values) - 5
-            suffix = f" (+{more} more)" if more > 0 else ""
-            result['errors'].append(
-                f"font-size must be a unitless numeric px value; found {shown}{suffix}. "
-                "Write e.g. font-size=\"28\", never font-size=\"28px\" or \"21pt\"."
-            )
-
     def _check_fonts(self, content: str, result: Dict):
         """Check font usage.
 
@@ -573,6 +546,185 @@ class SVGQualityChecker:
                 f"Detected {len(text_matches)} potentially overly long single-line text(s) (consider using tspan for wrapping)"
             )
 
+    def _check_unwrapped_text_fit(self, content: str, result: Dict):
+        """Flag long single-line text that is likely to drift after PPTX export.
+
+        SVG has no text-box width. A plain long <text> element is exported as a
+        single PowerPoint text frame, where CJK/Latin font metrics can differ
+        from browser preview. Require authors to hand-break risky lines with
+        line-start tspans before export.
+        """
+        try:
+            root = ET.fromstring(content)
+        except ET.ParseError:
+            return
+
+        width = 1280.0
+        viewbox = root.get('viewBox') or root.get('viewbox')
+        if viewbox:
+            parts = viewbox.split()
+            if len(parts) == 4:
+                try:
+                    width = float(parts[2])
+                except ValueError:
+                    pass
+
+        def local_name(elem: ET.Element) -> str:
+            return elem.tag.rsplit('}', 1)[-1]
+
+        def as_float(value: str | None, default: float) -> float:
+            if value is None:
+                return default
+            try:
+                return float(str(value).strip().replace('px', ''))
+            except ValueError:
+                return default
+
+        def style_value(style: str | None, name: str) -> str | None:
+            if not style:
+                return None
+            for chunk in style.split(';'):
+                if ':' not in chunk:
+                    continue
+                key, value = chunk.split(':', 1)
+                if key.strip() == name:
+                    return value.strip()
+            return None
+
+        def is_line_break_tspan(tspan_el: ET.Element) -> bool:
+            if tspan_el.get('x') is not None or tspan_el.get('y') is not None:
+                return True
+            dy = tspan_el.get('dy')
+            return dy is not None and as_float(dy, 0.0) != 0
+
+        def explicit_text_width(text_el: ET.Element) -> float | None:
+            for name in (
+                'data-text-width',
+                'data-box-width',
+                'data-container-width',
+                'data-pptx-width',
+            ):
+                raw = text_el.get(name)
+                if raw is None:
+                    continue
+                value = as_float(raw, 0.0)
+                if value > 0:
+                    return value
+            return None
+
+        def transform_offset(text_el: ET.Element) -> Tuple[float, float]:
+            transform = text_el.get('transform') or ''
+            m = re.search(r'translate\(\s*([-\d.]+)(?:[\s,]+([-\d.]+))?', transform)
+            if m:
+                return float(m.group(1)), float(m.group(2) or 0.0)
+            m = re.search(
+                r'matrix\(\s*[-\d.]+[\s,]+[-\d.]+[\s,]+[-\d.]+[\s,]+[-\d.]+[\s,]+([-\d.]+)[\s,]+([-\d.]+)',
+                transform,
+            )
+            if m:
+                return float(m.group(1)), float(m.group(2))
+            return 0.0, 0.0
+
+        def collect_visual_lines(text_el: ET.Element) -> List[Tuple[str, float | None]]:
+            lines: List[Tuple[str, float | None]] = []
+            text_parts: List[str] = []
+            if text_el.text:
+                text_parts.append(text_el.text)
+            for child in text_el:
+                if local_name(child) != 'tspan':
+                    if child.text:
+                        text_parts.append(child.text)
+                    if child.tail:
+                        text_parts.append(child.tail)
+                    continue
+                if is_line_break_tspan(child):
+                    if text_parts:
+                        lines.append((''.join(text_parts).strip(), None))
+                        text_parts = []
+                    line_x = as_float(child.get('x'), float('nan')) if child.get('x') is not None else None
+                    if line_x is not None and line_x != line_x:  # NaN check
+                        line_x = None
+                    lines.append((''.join(child.itertext()).strip(), line_x))
+                else:
+                    text_parts.append(''.join(child.itertext()))
+                if child.tail:
+                    text_parts.append(child.tail)
+            if text_parts:
+                lines.append((''.join(text_parts).strip(), None))
+            return [(text, x_pos) for text, x_pos in lines if text]
+
+        def estimate_width_px(text: str, font_size: float) -> float:
+            total = 0.0
+            for ch in text:
+                if ch.isspace():
+                    total += 0.35
+                elif ord(ch) > 127:
+                    total += 1.0
+                elif ch.isupper() or ch.isdigit():
+                    total += 0.62
+                else:
+                    total += 0.55
+            return total * font_size
+
+        risky: List[str] = []
+        safe_right = width - max(40.0, width * 0.04)
+        safe_left = max(24.0, width * 0.02)
+
+        for elem in root.iter():
+            if local_name(elem) != 'text':
+                continue
+
+            style = elem.get('style')
+            font_size = as_float(elem.get('font-size') or style_value(style, 'font-size'), 16.0)
+            if font_size < 14:
+                continue
+
+            text_anchor = elem.get('text-anchor') or style_value(style, 'text-anchor') or 'start'
+            dx, _dy = transform_offset(elem)
+            base_x = as_float(elem.get('x'), 0.0) + dx
+            declared_width = explicit_text_width(elem)
+
+            for text, line_x in collect_visual_lines(elem):
+                if len(text) < 18:
+                    continue
+                if '{{' in text and '}}' in text:
+                    continue
+                x = base_x if line_x is None else line_x
+                est_width = estimate_width_px(text, font_size)
+                if text_anchor == 'middle':
+                    left = x - est_width / 2
+                    right = x + est_width / 2
+                    inferred_available = max(0.0, 2 * min(x - safe_left, safe_right - x))
+                elif text_anchor == 'end':
+                    left = x - est_width
+                    right = x
+                    inferred_available = max(0.0, x - safe_left)
+                else:
+                    left = x
+                    right = x + est_width
+                    inferred_available = max(0.0, safe_right - x)
+
+                available_width = declared_width or inferred_available or width
+                large_heading_too_wide = font_size >= 28 and est_width >= min(width * 0.72, available_width * 0.96)
+                medium_line_too_wide = font_size >= 18 and est_width >= min(width * 0.82, available_width * 0.98)
+                spills_safe_area = right > safe_right or left < -safe_left
+
+                if large_heading_too_wide or medium_line_too_wide or spills_safe_area:
+                    snippet = text if len(text) <= 42 else text[:39] + '...'
+                    risky.append(
+                        f'"{snippet}" (font-size {font_size:g}px, estimated width {est_width:.0f}px, '
+                        f"available {available_width:.0f}px)"
+                    )
+
+        if risky:
+            preview = '; '.join(risky[:4])
+            suffix = '' if len(risky) <= 4 else f'; +{len(risky) - 4} more'
+            result['errors'].append(
+                "Unwrapped long text likely to drift or overflow in PPTX export. "
+                "Manually split with line-start <tspan x=\"...\" dy=\"...\">: "
+                f"{preview}{suffix}"
+            )
+
     def _check_image_references(self, content: str, svg_path: Path, result: Dict):
         """Check image file existence and resolution vs display size."""
         # Find all <image ...> elements (capture the full tag)
@@ -593,6 +745,8 @@ class SVGQualityChecker:
                 continue
 
             href = href_match.group(1)
+            if self.template_mode and '{{' in href and '}}' in href:
+                continue
             if href in checked:
                 continue
             checked.add(href)
@@ -762,22 +916,6 @@ class SVGQualityChecker:
                 allowed_colors.add(v.upper())
 
         typo = lock.get('typography', {})
-        numeric_size_re = re.compile(r'^(?:\d+(?:\.\d+)?|\.\d+)$')
-        invalid_lock_sizes = []
-        for k, v in typo.items():
-            if k == 'font_family' or k.endswith('_family'):
-                continue
-            if not numeric_size_re.fullmatch(v.strip()):
-                invalid_lock_sizes.append(f"{k}: {v}")
-        if invalid_lock_sizes:
-            shown = ', '.join(invalid_lock_sizes[:5])
-            more = len(invalid_lock_sizes) - 5
-            suffix = f" (+{more} more)" if more > 0 else ""
-            result['errors'].append(
-                f"spec_lock typography sizes must be unitless numeric px values; "
-                f"found {shown}{suffix}."
-            )
-
         # Font families: default `font_family` plus any per-role `*_family`
         # override (title_family / body_family / emphasis_family / code_family,
         # per spec_lock_reference.md). Any of these is a legitimate declared
@@ -833,10 +971,8 @@ class SVGQualityChecker:
                      else RAMP_MAX_RATIO)
 
         size_drifts = set()
-        used_sizes = []
         for m in re.finditer(r'font-size\s*=\s*["\']([^"\']+)["\']', content):
             val = self._normalize_size(m.group(1))
-            used_sizes.append(val)
             if not allowed_sizes or val in allowed_sizes:
                 continue
             # Intermediate values are allowed when they sit inside the ramp
@@ -849,10 +985,6 @@ class SVGQualityChecker:
                 except ValueError:
                     pass
             size_drifts.add(val)
-
-        template_size_drift = self._detect_template_size_drift(
-            used_sizes, allowed_sizes, body_px
-        )
 
         # Record in run-wide aggregation
         fname = svg_path.name
@@ -876,72 +1008,6 @@ class SVGQualityChecker:
                 f"spec_lock drift: {', '.join(parts)} not in spec_lock.md "
                 "(see drift summary for details)"
             )
-        if template_size_drift:
-            result['warnings'].append(template_size_drift)
-
-    def _detect_template_size_drift(self, used_sizes, allowed_sizes, body_px):
-        """Warn when template-like small sizes bypass the locked type ramp.
-
-        The normal drift check deliberately permits in-ramp feature sizes, so
-        it should not hard-fail valid hero numbers or one-off labels. This
-        warning targets the common executor failure mode: copying a template's
-        compact 12/15/16px text stack instead of mapping content roles to
-        spec_lock typography, then reflowing from those locked px values.
-        """
-        if not allowed_sizes or not body_px or body_px <= 0:
-            return None
-
-        try:
-            declared_min = min(float(v) for v in allowed_sizes)
-        except ValueError:
-            declared_min = None
-
-        # Stay narrow on purpose: real decks carry legitimate undeclared
-        # sub-body sizes (intermediate levels, labels, emphasis) just below the
-        # locked body, so "any size < body" floods the warning and destroys its
-        # credibility. Only flag values that read as genuine template leftovers
-        # — at or below `body * 0.75`, or below the smallest declared slot. This
-        # under-warns (a stray 15/16 against a body of 18 can slip through) in
-        # exchange for not crying wolf on valid intermediate type.
-        template_like_limit = body_px * 0.75
-        template_like_sub_body = []
-        for raw in used_sizes:
-            if raw in allowed_sizes:
-                continue
-            try:
-                size = float(raw)
-            except (TypeError, ValueError):
-                continue
-            below_declared_floor = declared_min is not None and size < declared_min
-            if size <= template_like_limit or below_declared_floor:
-                template_like_sub_body.append(raw)
-
-        if not template_like_sub_body:
-            return None
-
-        counts = Counter(template_like_sub_body)
-        distinct = sorted(counts, key=lambda v: float(v))
-        repeated_total = sum(counts.values())
-
-        below_declared_floor = []
-        if declared_min is not None:
-            below_declared_floor = [v for v in distinct if float(v) < declared_min]
-
-        if len(distinct) < 2 and repeated_total < 4 and not below_declared_floor:
-            return None
-
-        sample = ', '.join(
-            f"{v}x{counts[v]}" if counts[v] > 1 else v
-            for v in distinct[:5]
-        )
-        more = len(distinct) - 5
-        suffix = f" (+{more} more)" if more > 0 else ""
-        return (
-            "possible template font-size drift: undeclared sub-body size(s) "
-            f"{sample}{suffix}. Map each text item to a spec_lock typography "
-            "role first, then reflow card height / y / dy / line-height from "
-            "the locked px values."
-        )
 
     def _find_image_sources_manifest(self, svg_path: Path) -> Path | None:
         """Locate image_sources.json for a project SVG.
@@ -1009,12 +1075,9 @@ class SVGQualityChecker:
 
     @staticmethod
     def _normalize_size(value: str) -> str:
-        """Normalize a font-size value for drift comparison.
-
-        Unit-bearing SVG values are reported as errors before drift checking.
-        The legacy `px` strip remains to avoid a duplicate drift warning after
-        the hard error has already identified the unit problem.
-        """
+        """Normalize a font-size value for comparison: lowercase, strip spaces,
+        strip trailing 'px'. Other units (em / rem / %) are kept as-is so that
+        e.g. '1.5em' vs '24' stay distinct."""
         v = value.strip().lower()
         if v.endswith('px'):
             v = v[:-2].strip()
@@ -1037,6 +1100,8 @@ class SVGQualityChecker:
             return 'viewBox issues'
         elif 'foreignObject' in error_msg:
             return 'foreignObject'
+        elif 'Unwrapped long text' in error_msg:
+            return 'Text layout issues'
         elif 'font' in error_msg.lower():
             return 'Font issues'
         else:

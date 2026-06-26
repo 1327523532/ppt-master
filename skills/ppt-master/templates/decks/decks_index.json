@@ -1,4 +1,10 @@
 {
+  "Lenovo": {
+    "summary": "Minimal Lenovo brand shell with restrained background colors and logo only; use when content layout should be generated freely.",
+    "canvas_format": "ppt169",
+    "page_count": 5,
+    "primary_color": "#E1251B"
+  },
   "中国电信": {
     "summary": "China Telecom related briefings, 政企数字化方案, 转型规划, 内部汇报.",
     "canvas_format": "ppt169",

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="cover-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.58" stop-color="#F7F5F8"/>
+      <stop offset="1" stop-color="#F1EEF4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#cover-bg)"/>
+  <rect x="0" y="0" width="1280" height="8" fill="#E1251B"/>
+  <rect x="80" y="84" width="118" height="40" fill="#E1251B"/>
+  <text x="139" y="111" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">Lenovo</text>
+  <rect x="1112" y="0" width="88" height="720" fill="#E1251B"/>
+  <rect x="1200" y="0" width="80" height="720" fill="#4D144A"/>
+  <circle cx="1060" cy="360" r="260" fill="#4D144A" fill-opacity="0.045"/>
+  <path d="M 0 720 L 310 720 L 520 0 L 420 0 Z" fill="#E1251B" fill-opacity="0.045"/>
+</svg>

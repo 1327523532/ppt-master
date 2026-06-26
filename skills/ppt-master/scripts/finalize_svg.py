@@ -46,6 +46,7 @@ from svg_finalize.align_embed_images import (
     count_office_vector_refs_in_svg,
 )
 from svg_finalize.embed_icons import process_svg_file as embed_icons_in_file
+from visual_review_gate import enforce_visual_review_gate
 
 
 def safe_print(text: str) -> None:
@@ -146,6 +147,9 @@ def finalize_project(
     svg_files = list(svg_output.glob('*.svg'))
     if not svg_files:
         safe_print(f"[ERROR] No SVG files in svg_output")
+        return False
+
+    if not enforce_visual_review_gate(project_dir, "finalize_svg.py"):
         return False
 
     if not quiet:

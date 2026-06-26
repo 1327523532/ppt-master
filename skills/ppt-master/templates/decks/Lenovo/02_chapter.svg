@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1280" height="8" fill="#E1251B"/>
+  <rect x="80" y="84" width="118" height="40" fill="#E1251B"/>
+  <text x="139" y="111" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="700">Lenovo</text>
+  <rect x="80" y="620" width="1120" height="1.5" fill="#E1251B" fill-opacity="0.32"/>
+  <rect x="1060" y="0" width="140" height="720" fill="#F4F1F5"/>
+  <rect x="1200" y="0" width="80" height="720" fill="#E1251B"/>
+</svg>
