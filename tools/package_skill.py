@@ -54,7 +54,7 @@ _MIN_ENV = """\
 # REQUIRED — remote icon host. Icons are fetched on demand from
 # <ICON_BASE_URL>/<lib>/<name>.svg. Change to your icon host.
 # 必配 — 图标托管地址，按需拉取图标用。改成你的地址。
-ICON_BASE_URL=https://cowork.lenovo.com/ppt-icon
+ICON_BASE_URL=https://employeecowork-test.lenovo.com/skillicons
 
 # Optional — bearer token if the icon host requires auth.
 # 可选 — 图标托管需要鉴权时填。
