@@ -114,6 +114,10 @@ projects/*/.review/
 *.rar
 *.7z
 
+# Icon CDN: ship the zipped icon source, but ignore the runtime-extracted copy
+!icon-source/icon-source.zip
+/.icon-cache/
+
 # Documentation build outputs
 docs/_build/
 docs/.doctrees/
