@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <radialGradient id="endingGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#831B22"/>
+      <stop offset="40%" stop-color="#4D144A"/>
+      <stop offset="100%" stop-color="#391262"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="url(#endingGradient)"/>
+  <g id="ending-thanks">
+    <text x="640" y="320" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="80" fill="#FFFFFF" font-weight="bold" letter-spacing="-2">
+      {{THANK_YOU}}
+    </text>
+  </g>
+  <g id="ending-subtitle">
+    <text x="640" y="400" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="27" fill="#FFFFFF" fill-opacity="0.8">
+      {{ENDING_SUBTITLE}}
+    </text>
+  </g>
+  <g id="ending-contact">
+    <text x="640" y="500" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF" fill-opacity="0.7">
+      {{CONTACT_INFO}}
+    </text>
+  </g>
+  <g id="ending-copyright">
+    <text x="640" y="680" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="13" fill="#FFFFFF" fill-opacity="0.5">
+      {{COPYRIGHT}}
+    </text>
+  </g>
+</svg>

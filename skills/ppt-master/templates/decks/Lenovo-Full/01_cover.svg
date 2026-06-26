@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect x="0" y="0" width="1280" height="720" fill="#1E0113"/>
+  <g id="cover-title">
+    <text x="80" y="255" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="107" fill="#FFFFFF" font-weight="bold" letter-spacing="-2">
+      {{TITLE}}
+    </text>
+  </g>
+  <g id="cover-subtitle">
+    <text x="80" y="564" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="35" fill="#FFFFFF">
+      {{SUBTITLE}}
+    </text>
+  </g>
+  <g id="cover-meta">
+    <text x="80" y="620" text-anchor="start" font-family="Arial, Microsoft YaHei, sans-serif" font-size="18" fill="#FFFFFF" fill-opacity="0.7">
+      {{DATE}} | {{AUTHOR}}
+    </text>
+  </g>
+</svg>
