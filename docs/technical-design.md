@@ -36,7 +36,7 @@ User Input (PDF/DOCX/XLSX/URL/Markdown)
     ↓
 [Chart calibration (optional)] → verify-charts workflow (for decks containing data charts)
     ↓
-[Visual self-check (optional, opt-in)] → visual-review workflow (only when the user explicitly requests it)
+[Visual self-check (default-on, user can opt out)] → visual-review workflow (runs by default between Executor and post-processing)
     ↓
 [Post-processing] → total_md_split.py (split notes) → finalize_svg.py → svg_to_pptx.py
     ↓
@@ -296,4 +296,6 @@ The interesting design choice is the animation **anchor**, not the effect list.
 
 ## Standalone Workflows
 
-Six capabilities (`create-template`, `verify-charts`, `customize-animations`, `live-preview`, `generate-audio`, `visual-review`) live as standalone workflows rather than pipeline steps. Each is sparsely triggered — per-template, per-chart-deck, per-animation-tuning request, per-complaint, per-video-export, per explicit visual-review request — not per-deck. Folding any into the default pipeline would either run unnecessary steps for the majority of users (added latency and failure surface) or force a one-size-fits-all narrowing of the main flow. Keeping them opt-in lets the deck-generation pipeline stay tight and predictable while making the capability available when its trigger condition fires; each `workflows/<name>.md` is self-contained and loaded on demand, so paying the prompt-context cost is also opt-in.
+Five capabilities (`create-template`, `verify-charts`, `customize-animations`, `live-preview`, `generate-audio`) live as standalone workflows rather than pipeline steps. Each is sparsely triggered — per-template, per-chart-deck, per-animation-tuning request, per-complaint, per-video-export — not per-deck. Folding any of these into the default pipeline would either run unnecessary steps for the majority of users (added latency and failure surface) or force a one-size-fits-all narrowing of the main flow. Keeping them opt-in lets the deck-generation pipeline stay tight and predictable while making the capability available when its trigger condition fires; each `workflows/<name>.md` is self-contained and loaded on demand, so paying the prompt-context cost is also opt-in.
+
+The sixth capability, `visual-review`, is the exception: it runs by default between Executor and post-processing because every deck benefits from the per-page rubric pass, and the cost (one pass of rubric reads + playwright PNG renders) is a small fraction of the full generation run. The user may opt out in chat before Step 7 begins (e.g. "跳过视觉自检" / "skip visual review"); once opted out, no further ask is needed. No other signal — deck size, model identity, prior runs — changes this default.

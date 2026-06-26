@@ -12,7 +12,7 @@ description: Per-page rubric-based visual self-review via parallel subagents. Ru
 
 ## Positioning
 
-This is an **optional auxiliary loop**, opt-in only. The main pipeline (SKILL.md Step 1–7) does not invoke it; trigger only when the user explicitly asks for a visual re-pass on the generated SVGs before export.
+This is the **default** post-Executor loop. The main pipeline (SKILL.md Step 6 → Step 7) runs it automatically between `svg_quality_checker.py` and post-processing for every deck. The user may opt out in chat before Step 7 begins (e.g. "跳过视觉自检" / "skip visual review" / "不要跑视觉回看"); once opted out, no further ask is needed. Do not infer or recommend running or skipping it from deck size, model identity, or any other signal — only an explicit opt-out changes the default.
 
 **Token cost**: each batch subagent re-reads the rubric + `design_spec.md` + `spec_lock.md` and processes K SVG+PNG pairs. For a 20-page deck with K=5, expect on the order of 100–150K additional input tokens on top of the main generation run.
 
@@ -21,7 +21,7 @@ This is an **optional auxiliary loop**, opt-in only. The main pipeline (SKILL.md
 - Executor (SKILL.md Step 6) has finished all pages
 - `svg_quality_checker.py` has passed
 - Post-processing (`finalize_svg.py`, `svg_to_pptx.py`) has **not** yet run
-- The user has explicitly requested visual review
+- The user has not opted out of the visual review for this run
 
 For decks containing data charts, run [`verify-charts`](./verify-charts.md) first — visual-review focuses on visual rhythm / collision / alignment, not chart coordinate math.
 
@@ -30,7 +30,7 @@ For decks containing data charts, run [`verify-charts`](./verify-charts.md) firs
 - The project has no `svg_output/<page>.svg` files yet — finish Executor first
 - `svg_quality_checker.py` has not been run or has failed — fix static violations first
 - User has already applied annotations via `live-preview` workflow and is in a fixed-edit loop — describe changes directly, do not re-trigger rubric
-- The user has not asked for it — do not auto-invoke based on inferred model capability or deck size
+- The user has opted out of the visual review for this run ("跳过视觉自检" / "skip visual review" / "不要跑视觉回看") — respect the opt-out and proceed straight to post-processing
 
 ---
 

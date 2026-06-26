@@ -88,7 +88,7 @@ For complete tool documentation, see `${SKILL_DIR}/scripts/README.md`.
 | `verify-charts` | `workflows/verify-charts.md` | Chart coordinate calibration — run after SVG generation if the deck contains data charts |
 | `customize-animations` | `workflows/customize-animations.md` | Object-level PPTX animation customization — run only when the user explicitly asks to tune animation order/effects/timing |
 | `live-preview` | `workflows/live-preview.md` | Browser-based live preview — auto-started during generation and re-enterable any time the user mentions "live preview", "preview", "看效果", or wants to click/select a slide element |
-| `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — run only when the user explicitly asks for a visual re-pass on the generated SVGs (between Executor and post-processing). Opt-in only; never invoked by the main pipeline. |
+| `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — runs by default between Executor and post-processing for every deck. The user may opt out in chat before Step 7 (e.g. "跳过视觉自检" / "skip visual review"); no other signal changes this default. |
 
 ### PPTX Route Boundary
 
@@ -560,7 +560,7 @@ python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
 
 > **Chart pages?** If this deck contains data charts (bar / line / pie / radar / etc.), run the standalone [`verify-charts`](workflows/verify-charts.md) workflow before Step 7 to calibrate coordinates. AI models routinely introduce 10–50 px errors when mapping data to pixel positions; verify-charts eliminates that class of error. Skip if no chart pages.
 
-> **Visual self-check (opt-in)?** If the user explicitly asked for a per-page visual re-pass on the SVGs ("跑一下视觉自检 / 视觉回看", "visual review", "check pages visually", etc.), run the standalone [`visual-review`](workflows/visual-review.md) workflow before Step 7. Do NOT run it by default and do NOT recommend it based on inferred model capability or deck size — trigger is user request only.
+> **Visual self-check (default-on)?** The visual-review workflow runs by default between Executor and Step 7. The user may opt out in chat before Step 7 begins (e.g. "跳过视觉自检", "skip visual review", "不要跑视觉回看"); once opted out, no further ask is needed. Do NOT infer or recommend running or skipping it from deck size, model identity, or any other signal — only an explicit opt-out changes the default.
 
 ---
 
