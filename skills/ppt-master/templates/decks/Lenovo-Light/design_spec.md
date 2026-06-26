@@ -1,5 +1,5 @@
 ---
-deck_id: Lenovo
+deck_id: Lenovo-Light
 kind: deck
 template_role: replica
 theme: light
@@ -13,6 +13,18 @@ placeholders:
   03_chapter: []
   04_content: []
   05_ending: []
+---
+
+## Selection Guidance
+
+**Use this deck when** the user supplies an explicit path to `templates/decks/Lenovo-Light/` OR requests a Lenovo-branded deck on a **light surface** (white / off-white background). Trigger phrasings include:
+
+- `联想浅色模板` / `联想亮色版` / `联想白色主题`
+- `Lenovo light theme` / `Lenovo light deck` / `Lenovo white background`
+- `用 templates/decks/Lenovo-Light/`
+
+If the user asks for a **dark** Lenovo deck (keynote / evening launch / dark-room / `联想深色模板` / `Lenovo dark theme`), route instead to [`../Lenovo-Dark/design_spec.md`](../Lenovo-Dark/design_spec.md). Both decks share the same outline (cover / TOC / content / chapter / ending) and brand identity (colors, typography, logo); only the surface treatment differs.
+
 ---
 
 # Lenovo - Design Specification

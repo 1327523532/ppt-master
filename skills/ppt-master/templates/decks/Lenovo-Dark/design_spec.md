@@ -15,6 +15,18 @@ placeholders:
   05_ending: []
 ---
 
+## Selection Guidance
+
+**Use this deck when** the user supplies an explicit path to `templates/decks/Lenovo-Dark/` OR requests a Lenovo-branded deck on a **dark surface** (`#1E0113` cover / TOC / content / chapter; radial-gradient dark ending). Trigger phrasings include:
+
+- `联想深色模板` / `联想暗色版` / `联想夜间版`
+- `Lenovo dark theme` / `Lenovo dark deck` / `Lenovo keynote` / `Lenovo evening launch`
+- `用 templates/decks/Lenovo-Dark/`
+
+If the user asks for a **light** Lenovo deck (default enterprise / white background / `联想浅色模板` / `Lenovo light theme`), route instead to [`../Lenovo-Light/design_spec.md`](../Lenovo-Light/design_spec.md). Both decks share the same outline (cover / TOC / content / chapter / ending) and brand identity (colors, typography, logo); only the surface treatment differs.
+
+---
+
 # Lenovo-Dark - Design Specification
 
 > Dark variant replica derived from `ref/Lenovo-template.pptx` slide_01/13/141 (dark page family) and slide_50 (3-card content layout, color-adjusted for dark surface). Surface tokens per brand spec §VII.

@@ -16,7 +16,9 @@ discovery happens exclusively against the index file):
 
 - brand:  ``{ summary, primary_color }``
 - layout: ``{ summary, canvas_format, page_count, page_types[] }``
-- deck:   ``{ summary, canvas_format, page_count, primary_color }``
+- deck:   ``{ summary, theme, canvas_format, page_count, primary_color }``
+         (the optional ``theme`` field carries ``light`` / ``dark`` / ``hybrid``
+         when the deck ships a theming choice; omitted when absent)
 
 Usage::
 
@@ -232,6 +234,9 @@ def _extract_entry(kind: str, template_id: str, template_dir: Path) -> dict:
             page_count=int(fm.get("page_count", len(pages))),
             primary_color=str(primary_color),
         )
+        theme = (fm.get("theme") or "").strip()
+        if theme:
+            entry["theme"] = theme
     else:
         raise SpecParseError(f"unknown kind {kind!r}")
 
