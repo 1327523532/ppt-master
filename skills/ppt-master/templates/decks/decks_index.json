@@ -4,14 +4,18 @@
     "canvas_format": "ppt169",
     "page_count": 5,
     "primary_color": "#E1251B",
-    "theme": "dark"
+    "theme": "dark",
+    "brand_ref": "brands/lenovo",
+    "theme_files": ["01_cover.svg", "02_toc.svg", "03_chapter.svg", "04_content.svg", "05_ending.svg"]
   },
   "Lenovo-Light": {
     "summary": "Lenovo-branded enterprise decks, product launches (ThinkPad / IdeaPad / ThinkSystem), and partner-facing materials derived from the Lenovo reference template.",
     "canvas_format": "ppt169",
     "page_count": 5,
     "primary_color": "#E1251B",
-    "theme": "light"
+    "theme": "light",
+    "brand_ref": "brands/lenovo",
+    "theme_files": ["01_cover.svg", "02_toc.svg", "03_chapter.svg", "04_content.svg", "05_ending.svg"]
   },
   "中国电信": {
     "summary": "China Telecom related briefings, 政企数字化方案, 转型规划, 内部汇报.",
