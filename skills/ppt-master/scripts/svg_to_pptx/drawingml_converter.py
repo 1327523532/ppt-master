@@ -345,48 +345,75 @@ def _bake_elem_transform(elem: ET.Element) -> None:
     ctx. Baking the element's matrix into its anchor attributes makes the
     converter's job purely "draw at these absolute coordinates".
 
+    The compose is split:
+    - the **translate** part (``e, f``) is added to anchor points (x / y /
+      cx / cy / x1 / y1 / x2 / y2)
+    - the **scale** part (``a, d``) is applied to widths / heights / radii
+      when they are not 1.0
+    - the **rotate** part (``b, c``) is intentionally NOT baked here. It
+      stays in the element's ``transform`` string so the per-converter
+      code (``convert_rect``'s ``rot=`` field, etc.) can decide how to
+      express it in DrawingML.
+
+    Skipped when the matrix is identity, or carries only rotate / flip
+    (no translate, no non-1 scale) — those have no geometric effect that
+    the per-converter code isn't already handling.
+
     mutate: x / y / cx / cy / x1 / y1 / x2 / y2 / width / height /
     r / rx / ry attributes are rewritten to the post-transform values.
-    The ``transform`` string itself is left in place — ``convert_rect``,
-    ``convert_circle`` and friends still read ``rotate()`` from it and
-    emit it through PowerPoint's ``rot=`` attribute.
-
-    Skipped:
-    - elements without a transform attribute
-    - elements whose matrix is identity or pure rotation (no translate /
-      scale to bake — baking rotate would fight with the per-converter
-      ``rot=`` handling)
-    - ``path``, ``polygon``, ``polyline`` — these use their own parsing
-      paths and already handle translate/scale correctly
+    The ``transform`` string itself is left in place so convert_rect /
+    convert_circle still parse ``rotate()`` out of it for their ``rot=``
+    fields.
     """
     transform = elem.get('transform')
     if not transform:
         return
     matrix = parse_transform_matrix(transform)
     a, b, c, d, e, f = matrix
-    # Pure rotation or identity — nothing to bake.
-    if e == 0.0 and f == 0.0 and a == 1.0 and d == 1.0 and b == 0.0 and c == 0.0:
+    has_translate = e != 0.0 or f != 0.0
+    has_rotate = b != 0.0 or c != 0.0
+    # A row's squared magnitude tells us whether the matrix scales along
+    # that axis. A pure rotation (or ±1 flip) satisfies a²+b² == 1 and
+    # c²+d² == 1; anything that deviates from that is real scale that
+    # we have to bake into widths / heights / radii.
+    x_scale_sq = a * a + b * b
+    y_scale_sq = c * c + d * d
+    has_non1_scale = abs(x_scale_sq - 1.0) > 1e-9 or abs(y_scale_sq - 1.0) > 1e-9
+    # Nothing to bake when the matrix is identity, pure rotation, or pure
+    # ±1 flip — per-converter code handles those through the rot= field.
+    if not has_translate and not has_non1_scale:
         return
 
+    # Use the full matrix to position anchors — covers translate, scale,
+    # rotation, and any combination. translate_point(x, y) = (a*x + c*y + e,
+    # b*x + d*y + f) which is exact for affine transforms (shear included).
+    use_full = True
     tag = elem.tag.replace(f'{{{SVG_NS}}}', '')
 
     if tag == 'rect':
         x = float(elem.get('x', 0))
         y = float(elem.get('y', 0))
-        nx, ny = transform_point(matrix, x, y)
+        if use_full:
+            nx, ny = transform_point(matrix, x, y)
+        else:
+            nx, ny = x + e, y + f
         elem.set('x', str(nx))
         elem.set('y', str(ny))
-        if a != 1.0 or d != 1.0:
+        if a != 1.0:
             w_attr = elem.get('width')
-            h_attr = elem.get('height')
             if w_attr is not None:
                 elem.set('width', str(float(w_attr) * a))
+        if d != 1.0:
+            h_attr = elem.get('height')
             if h_attr is not None:
                 elem.set('height', str(float(h_attr) * d))
     elif tag == 'circle':
         x = float(elem.get('cx', 0))
         y = float(elem.get('cy', 0))
-        nx, ny = transform_point(matrix, x, y)
+        if use_full:
+            nx, ny = transform_point(matrix, x, y)
+        else:
+            nx, ny = x + e, y + f
         elem.set('cx', str(nx))
         elem.set('cy', str(ny))
         if a != 1.0:
@@ -396,39 +423,54 @@ def _bake_elem_transform(elem: ET.Element) -> None:
     elif tag == 'ellipse':
         x = float(elem.get('cx', 0))
         y = float(elem.get('cy', 0))
-        nx, ny = transform_point(matrix, x, y)
+        if use_full:
+            nx, ny = transform_point(matrix, x, y)
+        else:
+            nx, ny = x + e, y + f
         elem.set('cx', str(nx))
         elem.set('cy', str(ny))
-        rx_attr = elem.get('rx')
-        ry_attr = elem.get('ry')
-        if a != 1.0 and rx_attr is not None:
-            elem.set('rx', str(float(rx_attr) * a))
-        if d != 1.0 and ry_attr is not None:
-            elem.set('ry', str(float(ry_attr) * d))
+        if a != 1.0:
+            rx_attr = elem.get('rx')
+            if rx_attr is not None:
+                elem.set('rx', str(float(rx_attr) * a))
+        if d != 1.0:
+            ry_attr = elem.get('ry')
+            if ry_attr is not None:
+                elem.set('ry', str(float(ry_attr) * d))
     elif tag == 'line':
         for x_attr, y_attr in (('x1', 'y1'), ('x2', 'y2')):
             x = float(elem.get(x_attr, 0))
             y = float(elem.get(y_attr, 0))
-            nx, ny = transform_point(matrix, x, y)
+            if use_full:
+                nx, ny = transform_point(matrix, x, y)
+            else:
+                nx, ny = x + e, y + f
             elem.set(x_attr, str(nx))
             elem.set(y_attr, str(ny))
     elif tag == 'image':
         x = float(elem.get('x', 0))
         y = float(elem.get('y', 0))
-        nx, ny = transform_point(matrix, x, y)
+        if use_full:
+            nx, ny = transform_point(matrix, x, y)
+        else:
+            nx, ny = x + e, y + f
         elem.set('x', str(nx))
         elem.set('y', str(ny))
-        if a != 1.0 or d != 1.0:
+        if a != 1.0:
             w_attr = elem.get('width')
-            h_attr = elem.get('height')
             if w_attr is not None:
                 elem.set('width', str(float(w_attr) * a))
+        if d != 1.0:
+            h_attr = elem.get('height')
             if h_attr is not None:
                 elem.set('height', str(float(h_attr) * d))
     elif tag == 'text':
         x = float(elem.get('x', 0))
         y = float(elem.get('y', 0))
-        nx, ny = transform_point(matrix, x, y)
+        if use_full:
+            nx, ny = transform_point(matrix, x, y)
+        else:
+            nx, ny = x + e, y + f
         elem.set('x', str(nx))
         elem.set('y', str(ny))
 
@@ -473,7 +515,10 @@ def convert_element(elem: ET.Element, ctx: ConvertContext) -> ShapeResult | None
         # attributes so per-converter code only deals with absolute
         # coordinates + the parent ctx. The transform string is preserved
         # (convert_rect / convert_circle still read rotate() out of it).
-        _bake_elem_transform(elem)
+        # Skip g / svg — the first two fold their transform into the
+        # child ctx (not into their own attributes).
+        if tag not in ('g', 'svg'):
+            _bake_elem_transform(elem)
         try:
             result = converter(elem, ctx)
         except Exception as e:

@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Lenovo Light chapter divider (03_chapter.svg) — Section Header_White DNA from P9.
+  Lenovo Light content — big idea (08_big_idea.svg).
 
-  Ref P9 ("Section header" / "Subhead here") + P30 ("Strategy"):
-  - White background, NO decoration
-  - Large black title left-aligned (Arial bold ~80pt)
-  - Smaller black subtitle below (Arial regular ~28pt)
+  Big Idea layout — white background, centered large statement in plum,
+  supporting explanation below in small black text.
+
+  - White background
+  - Centered big-idea headline (Arial bold 64pt, plum #4D144A) — 2 lines
+  - Centered supporting subtitle (Arial regular 18pt, dark gray)
+  - Plum accent under the headline
   - Footer: red Lenovo mark + copyright + page number
-
-  This replaces the previous full-bleed dark-plum chapter that the older template-01
-  had — the new official template uses a clean white divider, leaning on the title
-  typography to do the visual work.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="lenovo-light-chapter-title">
-  <title id="lenovo-light-chapter-title">Lenovo chapter divider (light)</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="lenovo-light-big-idea-title">
+  <title id="lenovo-light-big-idea-title">Lenovo content — big idea</title>
 
   <!-- White background -->
   <rect width="1280" height="720" fill="#1E0113"/>
 
-  <!-- Optional small chapter numeral (subtle, top-left, in plum) -->
-  <text x="80" y="120" fill="#391262" fill-opacity="0.45" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="3">{{CHAPTER_NUM}}</text>
-
-  <!-- Big black section title -->
-  <text x="80" y="380" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="80" font-weight="700" letter-spacing="-2">
-    {{CHAPTER_TITLE}}
+  <!-- Centered big idea headline -->
+  <text x="640" y="340" text-anchor="middle" fill="#391262" font-family="Arial, Microsoft YaHei, sans-serif" font-size="64" font-weight="700" letter-spacing="-2">
+    <tspan x="640" dy="0">{{BIG_IDEA_LINE_1}}</tspan>
+    <tspan x="640" dy="76">{{BIG_IDEA_LINE_2}}</tspan>
   </text>
 
-  <!-- Subtitle / subhead -->
-  <text x="80" y="430" fill="#FFFFFF" fill-opacity="0.7" font-family="Arial, sans-serif" font-size="28" font-weight="400">
-    {{CHAPTER_DESC}}
+  <!-- Plum accent under headline -->
+  <rect x="580" y="450" width="120" height="3" fill="#391262"/>
+
+  <!-- Supporting subtitle -->
+  <text x="640" y="500" text-anchor="middle" fill="#FFFFFF" fill-opacity="0.72" font-family="Arial, Microsoft YaHei, sans-serif" font-size="18">
+    {{SUPPORTING_TEXT}}
   </text>
 
   <!-- Bottom-left footer: red Lenovo mark + copyright -->
