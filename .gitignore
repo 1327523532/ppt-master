@@ -184,3 +184,5 @@ PERSONAL_NOTES.md
 # Use cloud sync (iCloud/Dropbox) for backup and multi-device access
 projects/*
 !projects/README.md
+lenovo-res/
+examples/lenovo_deepseek-gpt-6p_ppt169_20260626/
