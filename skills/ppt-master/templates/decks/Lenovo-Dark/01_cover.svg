@@ -1,48 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Lenovo Dark cover (01_cover.svg) — dark variant of lenovo-template-02.pptx Title Slide_Black.
+  Lenovo-Dark cover (01_cover.svg) — variant of lenovo-template-02.pptx Title Slide.
 
-  Source DNA (P1 Title Slide_Black):
-  - Full dark plum #1E0113 background
-  - Top-left "Smarter technology for all" tagline (white, 1 line)
-  - Left-aligned multi-line title in white (Arial bold ~106pt)
-  - "Speaker name | Date" subtitle in white below the title
-  - Right-edge vertical red Lenovo mark (red panel + 6 white letterforms rotated 90°)
-  - Footer: red Lenovo mark + "2026 Lenovo Internal. All rights reserved." (left, white text), page number (right, white)
-
-  The dark cover is the "keynote / evening launch / dark-room" version of the Lenovo brand.
+  Source DNA extracted from lenovo-template-02.pptx P5-P8:
+  - Full-bleed background (gradient for light variants, dark plum for dark variants)
+  - Top-left "Smarter technology for all" tagline (#FFFFFF)
+  - Left-aligned multi-line title (#FFFFFF)
+  - "Speaker name | Date" subtitle (#FFFFFF)
+  - Right-edge vertical red Lenovo mark (LARGE COVER VARIANT, 204×68 px after 2.5x scale)
+    — INLINE SVG paths (no external image dependency)
+  - Bottom-left footer: small red Lenovo mark + "2026 Lenovo Internal. All rights reserved." + page number
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="lenovo-dark-cover-title">
-  <title id="lenovo-dark-cover-title">Lenovo cover (dark variant)</title>
+  <title id="lenovo-dark-cover-title">Lenovo-Dark cover (dark)</title>
 
-  <!-- Full dark plum background (per brand spec §VII Dark theme surface.bg = #1E0113) -->
   <rect width="1280" height="720" fill="#1E0113"/>
 
-  <!-- Top-left tagline: "Smarter technology for all" (white, 1 line, bold) -->
+  <!-- Top-left tagline -->
   <text x="80" y="100" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="700">
     Smarter technology for all
   </text>
 
-  <!-- Multi-line title (white, Arial bold 106pt) -->
-  <text x="80" y="290" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="106" font-weight="700" letter-spacing="-3">
+  <!-- Multi-line title -->
+  <text x="80" y="290" fill="#FFFFFF" font-family="Arial, Microsoft YaHei, sans-serif" font-size="106" font-weight="700" letter-spacing="-3">
     <tspan x="80" dy="0">{{TITLE_LINE_1}}</tspan>
     <tspan x="80" dy="100">{{TITLE_LINE_2}}</tspan>
     <tspan x="80" dy="100">{{TITLE_LINE_3}}</tspan>
   </text>
 
-  <!-- Speaker name / date subtitle (white) -->
-  <text x="80" y="640" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24">
+  <!-- Speaker name / date subtitle -->
+  <text x="80" y="640" fill="#FFFFFF" font-family="Arial, Microsoft YaHei, sans-serif" font-size="24">
     {{SUBTITLE}}
   </text>
 
   <!--
-    Right-edge vertical red Lenovo mark (matches layout-shape-68: Group 67 rotated 270°).
-    Red panel + 6 white "Lenovo" letterforms; rotated 90° so it reads bottom→top on the right edge.
-    The white letterforms are non-recolorable per the brand spec.
+    Right-edge vertical red Lenovo mark (LARGE COVER VARIANT).
+    Final size: 204 × 68 pixels (after 2.5x scaling of 81.6 × 27.22 viewBox).
+    The mark itself: 6 white "L-e-n-o-v-o" letterforms on a red panel.
+    Rotated -90° so it reads bottom→top on the right edge.
   -->
-  <g transform="translate(1095 360) rotate(-90) translate(-40.8 -13.61)"><image href="templates/brands/lenovo/lenovo_mark.svg" width="81.6" height="27.22"/></g>
+  <g transform="translate(1210 360) rotate(-90) translate(-102 -34)">
+    <g transform="scale(2.5)">
+      <rect x="0" y="0" width="81.6" height="27.22" fill="#E1251B"/>
+      <path d="M 17.06 17.15 L 10.53 17.15 L 10.53 6.20 L 7.62 6.20 L 7.62 19.79 L 17.06 19.79 L 17.06 17.15 Z" fill="#FFFFFF"/>
+      <path d="M 26.23 16.58 C 25.02 17.47 24.33 17.69 23.24 17.69 C 22.24 17.69 21.46 17.38 20.92 16.83 C 28.26 13.78 28.26 13.78 28.26 13.78 C 28.09 12.66 27.67 11.64 27.01 10.87 C 26.04 9.75 24.61 9.15 22.88 9.15 C 19.72 9.15 17.35 11.48 17.35 14.56 C 17.35 17.73 19.73 19.97 23.20 19.97 C 25.14 19.97 27.12 19.05 28.05 17.97 L 26.23 16.58 Z M 20.72 12.48 C 21.21 11.83 21.99 11.43 22.93 11.43 C 23.96 11.43 24.75 12.03 25.15 12.90 C 20.14 14.98 20.14 14.98 20.14 14.98 C 20.00 13.92 20.28 13.08 20.72 12.48 Z" fill="#FFFFFF"/>
+      <path d="M 35.56 9.15 C 34.36 9.15 33.00 9.71 32.16 10.83 C 32.16 10.83 32.16 10.83 32.16 10.83 C 32.16 9.32 32.16 9.32 32.16 9.32 C 29.29 9.32 29.29 9.32 29.29 9.32 C 29.29 19.79 29.29 19.79 29.29 19.79 C 32.16 19.79 32.16 19.79 32.16 19.79 C 32.16 13.83 32.16 13.83 32.16 13.83 C 32.16 12.76 32.99 11.62 34.53 11.62 C 35.72 11.62 36.94 12.45 36.94 13.83 C 36.94 19.79 36.94 19.79 36.94 19.79 C 39.81 19.79 39.81 19.79 39.81 19.79 C 39.81 13.31 39.81 13.31 39.31 13.31 C 39.81 10.89 38.09 9.15 35.56 9.15" fill="#FFFFFF"/>
+      <path d="M 46.54 19.97 C 43.41 19.97 40.95 17.62 40.95 14.56 C 40.95 11.52 43.42 9.15 46.58 9.15 C 49.72 9.15 52.18 11.50 52.18 14.56 C 52.18 17.60 49.71 19.97 46.54 19.97 M 46.54 11.61 C 44.95 11.61 43.78 12.82 43.78 14.56 C 43.78 16.21 45.01 17.51 46.58 17.51 C 48.19 17.51 49.35 16.26 49.35 14.56 C 49.35 12.91 48.11 11.61 46.54 11.61" fill="#FFFFFF"/>
+      <path d="M 60.21 9.33 L 57.62 16.46 L 55.02 9.33 L 51.74 9.33 L 56.05 19.79 L 59.19 19.79 L 63.50 9.33 L 60.21 9.33 Z" fill="#FFFFFF"/>
+      <path d="M 68.65 19.97 C 65.51 19.97 63.05 17.62 63.05 14.56 C 63.05 11.52 65.52 9.15 68.68 9.15 C 71.82 9.15 74.28 11.50 74.28 14.56 C 74.28 17.60 71.81 19.97 68.65 19.97 M 68.65 11.61 C 67.04 11.61 65.88 12.82 65.88 14.56 C 65.88 16.21 67.11 17.51 68.68 17.51 C 70.29 17.51 71.45 16.26 71.45 14.56 C 71.45 12.91 70.21 11.61 68.65 11.61" fill="#FFFFFF"/>
+    </g>
+  </g>
 
-  <!-- Bottom-left footer: small red Lenovo mark + copyright (white text on dark bg) -->
+
+  <!-- Bottom-left footer: small red Lenovo mark + copyright -->
   <g id="lenovo-footer-mark">
     <rect x="80" y="666.5" width="81.6" height="27.22" fill="#E1251B"/>
     <path d="M 96.89 683.64 L 90.36 683.64 L 90.36 672.69 L 87.45 672.69 L 87.45 686.28 L 96.89 686.28 L 96.89 683.64 Z" fill="#FFFFFF"/>
@@ -54,6 +64,6 @@
   </g>
   <text x="170" y="685" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="13.33">2026 Lenovo Internal. All rights reserved.</text>
 
-  <!-- Bottom-right: page number (white on dark) -->
+  <!-- Bottom-right: page number -->
   <text x="1248" y="688" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="13.33">{{PAGE_NUM}}</text>
 </svg>
