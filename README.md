@@ -255,7 +255,7 @@ Either way, the AI will first confirm the design spec:
 
 ```
 AI:  Sure. Let's confirm the design spec:
-     [Template] B) Free design
+     [Template] A) Lenovo brand + Lenovo-Light deck (default) / B) Free design (style description) / C) Other template path
      [Format]   PPT 16:9
      [Pages]    8-10 pages
      ...

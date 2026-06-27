@@ -18,6 +18,13 @@ A user who says "用联想浅色模板" / "联想深色版" / "Lenovo light them
 
 The optimization works *within* the existing trigger model: it makes the two specs self-describing when they *are* picked (via explicit path or Step 3 confirmation), and it makes the discovery index (`decks_index.json`) answer "which Lenovo deck is light/dark?" without opening a spec.
 
+> **Note (added 2026-06-27)**: As of this revision, the SKILL.md Step 3 default has changed: `templates/decks/Lenovo-Light/` + `templates/brands/lenovo/` are now the **default** visual system, applied when the user gives no template-related input. This changes two things about the routing design above:
+>
+> - Bare names "联想" / "Lenovo" no longer fire a separate template — they ARE the default. The user only needs an explicit path when they want to **override** the default (e.g. switch to Lenovo-Dark).
+> - "联想深色模板" / "Lenovo dark theme" still routes to `templates/decks/Lenovo-Dark/` because Lenovo-Dark is a different path; the bare-name auto-routing rule the design above commits to (no auto-fire on bare names) is now applied **only to non-default decks**, since "联想" itself is no longer a non-default name.
+>
+> The `## Selection Guidance` blocks the design added in this spec remain useful: they still describe when to pick each sibling, just no longer as the only way to route to it.
+
 ## Approach (Sibling Pair with Explicit Routing)
 
 The two decks stay as separate atomic packages (they have separate SVG rosters). Routing is added through three channels:

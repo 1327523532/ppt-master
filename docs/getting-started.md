@@ -14,7 +14,7 @@ The short path to your first deck, how to use everything around it — templates
 
 ## Start from a template
 
-**Optional.** By default PPT Master uses **free design** — you don't need a template, and you can skip to the next section. Reach for one only when a deck must reuse a fixed layout set or brand identity.
+**Required by default.** PPT Master ships with **Lenovo brand + Lenovo-Light deck as the default visual system** — every deck you generate looks like a Lenovo-branded deck out of the box (red `#E1251B`, Lenovo footer mark, 12-page outline). You don't need to set anything up; reach for a different template only when the deck must reuse a different layout set or brand identity.
 
 **Two ways to reuse an existing `.pptx`, depending on what you want back:**
 
@@ -25,7 +25,7 @@ The short path to your first deck, how to use everything around it — templates
 
 For the first, give the AI your `.pptx` plus your material (or a topic) and ask it to "fill this deck with the new content" — see the [template-fill workflow](../skills/ppt-master/workflows/template-fill-pptx.md). The rest of this section covers create-template.
 
-**To generate a new deck in an existing PowerPoint's style, you must explicitly run the create-template flow — don't just hand over a `.pptx` and expect the AI to handle it.** The AI defaults to free design and won't switch into the template flow on its own; without an explicit trigger, generation easily goes off the rails. First turn that `.pptx` into a PPT Master template via create-template:
+**To generate a new deck in a different brand's style, you must explicitly supply that template's path — don't just hand over a `.pptx` and expect the AI to handle it.** The AI defaults to the Lenovo brand + Lenovo-Light deck and won't switch templates on its own; without an explicit path, every deck will be Lenovo-styled regardless of the source material. First turn that `.pptx` into a PPT Master template via create-template:
 
 ```
 You: Replicate this as a template via /create-template: projects/brand/our_deck.pptx
@@ -55,7 +55,7 @@ Full guide → [Templates Guide](./templates-guide.md)
 The whole loop is three steps. Install first — you only need Python; see [Quick Start](../README.md#quick-start).
 
 1. **Drop your source material** into `projects/` — a PDF, DOCX, Markdown file, a URL, or just text you'll paste.
-2. **Tell the AI in chat** what to turn into a deck (add a template path if you set one up above; otherwise it's free design):
+2. **Tell the AI in chat** what to turn into a deck (add a template path to override the Lenovo default if you want a different style; otherwise every deck ships as a Lenovo-branded deck):
    ```
    You: Make a deck from projects/q3-report/sources/report.pdf
    You: 把这份内容做成 PPT：<paste your text>

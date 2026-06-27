@@ -12,45 +12,56 @@ This guide answers three questions:
 
 ## 1. Use an existing template
 
-### How to trigger
+### How it works by default
 
-The workflow **defaults to free design** — it will not ask whether you want a template and will not proactively suggest one. Templates are opt-in by **explicit directory path** only: name the path in your initial message.
+The workflow **defaults to the Lenovo brand + Lenovo-Light deck** — every deck you generate ships as a Lenovo-branded deck (red `#E1251B`, Lenovo footer mark, 12-page outline) without any setup. You don't need to ask for a template; the Lenovo preset is pre-applied in Step 3.
 
-### How to enter the template flow
+### How to override the default
 
-Send a path to a template directory in your initial message. Anywhere in the sentence is fine; the path just has to be unambiguous:
+Send a path to a different template directory in your initial message when you want to swap the Lenovo preset for something else. Anywhere in the sentence is fine; the path just has to be unambiguous:
 
 > "use this template: `skills/ppt-master/templates/layouts/academic_defense/`" ✅
 > "用这个模板做汇报：`projects/last_deck/template/`" ✅
 > "做一份产品介绍，模板用 `/Users/me/Desktop/our_brand_v3/`" ✅
 
-The AI copies that directory's SVGs, `design_spec.md`, and assets into your project, then proceeds to the Strategist phase. The path can point to anywhere — the built-in library under `skills/ppt-master/templates/layouts/`, a previous project's `template/` folder, or any other location on disk.
+The AI copies that directory's SVGs, `design_spec.md`, and assets into your project, replacing the Lenovo preset, then proceeds to the Strategist phase. The path can point to anywhere — the built-in library under `skills/ppt-master/templates/`, a previous project's `template/` folder, or any other location on disk.
 
-### What does NOT trigger the template flow
+### How to opt out to free design
 
-- **A bare template name without a path**: "use the academic_defense template" / "用 招商银行 模板" / "做一份 pixel_retro 模板的答辩" → free design. The AI does not look the name up. You must give a path.
-- **Style descriptions**: "McKinsey style" / "Google style" / "麦肯锡那种" / "极简风" / "Keynote 风" → free design. The descriptive words flow into Strategist as a style brief, but no template is copied.
-- **Vague intent**: "想用个模板" / "I want a template" with no path → free design.
+Free design is still available — it kicks in when the user gives a **style description** (e.g. "麦肯锡风格" / "极简风" / "Keynote 风") or any other phrasing that doesn't carry an explicit template path. On the free-design path, the AI skips Step 3 entirely and Strategist invents the visual system from the source content alone. This is the right escape hatch for essay-like content where atmosphere matters more than brand consistency (magazine, documentary narrative, essay decks).
 
-This is intentional — the AI never makes a fuzzy / interpretive judgment about whether your wording maps to a template, and never resolves a name to a path on your behalf. If you want a template, give the path.
+### What does NOT override the default
 
-To browse what's available in the built-in library, ask "what templates are available?" — the AI lists names and paths from the discovery index. Listing alone does not enter the template flow; you still need to send back a path to trigger Step 3.
+- **A bare template name without a path**: "use the academic_defense template" / "用 招商银行 模板" / "做一份 pixel_retro 模板的答辩" → stays on the Lenovo default. The AI does not look the name up. You must give a path.
+- **Style descriptions**: "McKinsey style" / "Google style" / "麦肯锡那种" / "极简风" / "Keynote 风" → collapses to **free design** (not the Lenovo preset, not any other template). The descriptive words flow into Strategist as a style brief; no template is copied.
+- **Vague intent**: "想用个模板" / "I want a template" with no path → stays on the Lenovo default.
+- **Bare "联想" / "Lenovo" mentions**: no override — the Lenovo preset already IS the default. To switch to the dark variant, send an explicit path: `templates/decks/Lenovo-Dark/`.
+
+This is intentional — the AI never makes a fuzzy / interpretive judgment about whether your wording maps to a template, and never resolves a name to a path on your behalf. If you want a non-Lenovo template, give the path.
+
+To browse what's available in the built-in library, ask "what templates are available?" — the AI lists names and paths from the discovery index. Listing alone does not enter the template flow; you still need to send back a path to override the Lenovo default.
 
 ### Template catalog
 
 Templates are organized into three kinds, each in its own directory:
 
-- [`templates/brands/README.md`](../skills/ppt-master/templates/brands/README.md) — identity-only presets (color / typography / logo / voice / icon style), no SVG pages; Anthropic, Google
+- [`templates/brands/README.md`](../skills/ppt-master/templates/brands/README.md) — identity-only presets (color / typography / logo / voice / icon style), no SVG pages; Anthropic, Google, **Lenovo** (the default brand)
 - [`templates/layouts/README.md`](../skills/ppt-master/templates/layouts/README.md) — structure-only patterns (canvas / page structure / page types / SVG roster), no identity; academic_defense, government_blue/red, ai_ops, medical_university, pixel_retro, psychology_attachment
-- [`templates/decks/README.md`](../skills/ppt-master/templates/decks/README.md) — full-PPT replicas (identity + structure + middle segments); 招商银行, 中国电建_*, 中汽研_*, 重庆大学, 中国电信
+- [`templates/decks/README.md`](../skills/ppt-master/templates/decks/README.md) — full-PPT replicas (identity + structure + middle segments); **Lenovo-Light** (the default deck), Lenovo-Dark, 招商银行, 中国电建_*, 中汽研_*, 重庆大学, 中国电信
 
 Full data model + fusion / conflict-resolution rules: [`docs/zh/templates-architecture.md`](./zh/templates-architecture.md) (Chinese only for now).
 
-### Free design vs template
+### Lenovo default vs explicit template vs free design
 
-Free design is **not** "no style" — the AI designs a fresh visual system **for that specific deck** based on its content. A template **reuses an already-defined structure and style**. Both involve real design work; the difference is whether the style is improvised or preset.
+Three options, one decision:
 
-> Rule of thumb: clear content direction + strong brand or scenario constraints (consulting reports, government briefings, defenses) → use a template. Essay-like content where atmosphere matters more (magazine, documentary narrative) → free design usually works better.
+| Path | What happens | When to reach for it |
+|---|---|---|
+| **Default — no input** | `decks/Lenovo-Light/` + `brands/lenovo/` pre-applied; deck inherits Lenovo visual system | Brand-locked enterprise decks, product launches, partner-facing materials — the 80% case |
+| **Explicit template path** | That directory's files copied into the project, overriding the Lenovo preset | You need a different brand identity (Anthropic, Google, etc.), a different structure (academic_defense, government_blue), or a non-Lenovo full replica |
+| **Style description** (e.g. "麦肯锡风") | Free design: AI invents the visual system from the source alone | Magazine-style narrative, documentary decks, essay content where atmosphere > brand consistency |
+
+All three involve real design work; the difference is whether the style is preset (Lenovo default or explicit template) or improvised (free design on a style brief).
 
 ### Styles are not templates
 

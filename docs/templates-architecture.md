@@ -205,7 +205,8 @@ When the user supplies a set of paths in their initial message, Step 3 fuses the
 
 | User paths | Fusion behavior |
 |---|---|
-| (none) | Skip Step 3, free design |
+| (default — no input) | Apply `decks/Lenovo-Light/` + `brands/lenovo/` (the Lenovo preset); segment-level fusion per the table above with both paths pre-supplied |
+| (none — opt-out via style description or vague intent) | Skip Step 3, free design |
 | brand only | Copy brand wholesale; structure stays free design |
 | layout only | Copy layout wholesale; identity stays free design (Strategist e/f/g confirmations decide) |
 | deck only | Copy deck wholesale |

@@ -10,7 +10,7 @@ Full data model: [`docs/zh/templates-architecture.md`](../../../../docs/zh/templ
 
 ## Trigger rule
 
-Layout selection is **opt-in by explicit path**. The main workflow defaults to free design. A layout is only used when the user gives an explicit directory path in their initial message (e.g. `skills/ppt-master/templates/layouts/academic_defense/`). Bare names do not trigger. See [`SKILL.md`](../../SKILL.md) Step 3.
+Layout selection **defaults to the Lenovo-Light deck**'s structure on the main workflow's default path; supply an explicit path here to override the structure (e.g. `templates/layouts/<id>/` to use a different layout skeleton). Bare names do not trigger an override — only an explicit directory path the AI can `cd` into does. See [`SKILL.md`](../../SKILL.md) Step 3.
 
 `layouts_index.json` is a **discovery aid**, not a trigger — it lets the AI answer "what layouts exist?" by listing ids and paths. Listing alone never advances the pipeline.
 

@@ -21,8 +21,8 @@ User Input (PDF/DOCX/XLSX/URL/Markdown)
     ↓
 [Create Project] → project_manager.py init <project_name> --format <format>
     ↓
-[Template (optional)] — default: skip, proceed with free design
-    User names a template: copy template files into the project
+[Template] — default: Lenovo brand + Lenovo-Light deck (pre-applied)
+    User names a template path: copy that template's files into the project, overriding the Lenovo default
     Need a new global template: use /create-template workflow separately
     ↓
 [Strategist] - Eight Confirmations & Design Specifications → design_spec.md + spec_lock.md
@@ -124,11 +124,11 @@ The architectural choice worth flagging: **viewBox is in pixels, not absolute un
 
 ## Template System & Optional Path
 
-Templates are **opt-in, not default**. The default Strategist flow is free design — AI invents the visual system from the source content alone. The template path activates only on explicit user trigger.
+Templates are **opt-in to override**, not opt-in to enable. The default Strategist flow applies `templates/decks/Lenovo-Light/` plus `templates/brands/lenovo/` so every generated deck ships as a Lenovo-branded deck out of the box. The user names an explicit template path to override that default with a different visual system.
 
-**Why default to free design.** Templates are floors that easily become ceilings: they lock the deck into the template's visual idioms regardless of how the content actually wants to be presented. Free-design layouts derive structure from the source content rather than imposing it from a fixed grammar, so the visual rhythm tracks the content rather than fighting it. Constrained mode is genuinely better in narrow cases (brand-locked decks, strongly-typed scenarios like academic defense or government report), so it stays available — but the AI doesn't proactively reach for it; the user does.
+**Why default to the Lenovo preset.** Lenovo enterprise decks are the canonical use case this skill ships for, and a brand-locked deck reads as professionally consistent across every generation. The default path also gives Strategist a known-good structure and middle segment (the Lenovo-Light 12-page outline) to anchor Eight Confirmations against, which produces more coherent results than open-ended free design for most content. Free design stays available as the opt-out for narrative or magazine-style content where atmosphere matters more than brand consistency — the user just says "麦肯锡风" or any other style brief and the default collapses into free design.
 
-**No proactive matching.** The AI does not suggest, hint at, or auto-map content to a template. Even when a deck looks like an obvious fit for an existing template, the AI stays silent and proceeds with free design unless the user has named the template. The reason is reliability over discoverability: matching content to templates is a judgment call that drifts as the library evolves, and a wrong "you might want X" pushes the user toward a commitment the AI cannot reliably make. Discoverability is handed to docs (the three `templates/{brands,layouts,decks}/README.md` per-kind indexes) and to the explicit query path ("what templates are available?"), not the runtime prompt.
+**No proactive matching.** The AI does not suggest, hint at, or auto-map content to a template *other than the Lenovo default*. Even when a deck looks like an obvious fit for an existing template, the AI stays silent and proceeds with the Lenovo default unless the user has named an explicit override path. The reason is reliability over discoverability: matching content to templates is a judgment call that drifts as the library evolves, and a wrong "you might want X" pushes the user toward a commitment the AI cannot reliably make. Discoverability is handed to docs (the three `templates/{brands,layouts,decks}/README.md` per-kind indexes) and to the explicit query path ("what templates are available?"), not the runtime prompt.
 
 **Layouts are opt-in; charts and icons are not.** The asymmetry isn't an inconsistency — *layout* is what locks visual idiom (the floor/ceiling problem above), while charts and icons are reusable primitives that don't impose deck-wide style. Same `templates/` directory, different role in the visual contract.
 
