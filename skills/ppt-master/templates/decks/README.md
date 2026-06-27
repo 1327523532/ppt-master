@@ -10,7 +10,7 @@ Full data model: [`docs/zh/templates-architecture.md`](../../../../docs/zh/templ
 
 ## Trigger rule
 
-Deck selection is **opt-in by explicit path**. The main workflow defaults to free design. A deck is only used when the user gives an explicit directory path in their initial message (e.g. `skills/ppt-master/templates/decks/招商银行/`). Bare names do not trigger. See [`SKILL.md`](../../SKILL.md) Step 3.
+Deck selection is **opt-in by explicit path**. The main workflow defaults to free design. A deck is only used when the user gives an explicit directory path in their initial message (e.g. `skills/ppt-master/templates/decks/Lenovo-Light/`). Bare names do not trigger. See [`SKILL.md`](../../SKILL.md) Step 3.
 
 `decks_index.json` is a **discovery aid**, not a trigger — it lets the AI answer "what decks exist?" by listing ids and paths. Listing alone never advances the pipeline.
 
