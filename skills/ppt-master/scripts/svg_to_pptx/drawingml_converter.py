@@ -129,6 +129,45 @@ def _extract_rotate_pivot(transform_str: str) -> tuple[float, float] | None:
     return cx, cy
 
 
+def _matrix_rotation_pivot(transform_str: str) -> tuple[float, float] | None:
+    """Fixed-point pivot of a rigid rotation expressed as a transform *list*.
+
+    Covers the ``translate(...) rotate(θ) translate(...)`` idiom (e.g. the
+    right-edge Lenovo mark, ``translate(1210 360) rotate(-90) translate(-102
+    -34)``) and any composite whose linear part is a pure, non-flipping
+    rotation by a non-zero angle. Such a rigid motion equals one rotation
+    about a fixed point ``p*`` solving ``(A − I)·p* = −t``, where ``A`` is the
+    2×2 linear part ``[[a, c], [b, d]]`` and ``t = (e, f)`` the translation
+    column.
+
+    ``_extract_rotate_pivot`` only recognises a *bare* ``rotate(...)``; when a
+    rotation is wrapped in translates the converter would otherwise fall to
+    the scalar branch, which cannot rotate at all — dropping the rotation and
+    leaving the shape un-rotated (the mark then runs off the right edge).
+
+    Returns ``None`` when the linear part is not a pure rotation (it carries
+    scale / shear / flip) or the angle is zero (``A − I`` singular — a pure
+    translation has no unique fixed point).
+    """
+    if not transform_str:
+        return None
+    a, b, c, d, e, f = parse_transform_matrix(transform_str)
+    # Linear part must be orthonormal with determinant +1: a pure rotation,
+    # no scale, shear, or flip. Scale/shear cases stay on the scalar branch.
+    if (abs(a * a + b * b - 1.0) > 1e-6 or
+            abs(c * c + d * d - 1.0) > 1e-6 or
+            abs(a * c + b * d) > 1e-6 or
+            abs((a * d - b * c) - 1.0) > 1e-6):
+        return None
+    det = (a - 1.0) * (d - 1.0) - c * b
+    if abs(det) < 1e-9:  # singular ⇒ angle 0 ⇒ no rotation to pivot about
+        return None
+    # p* = (A − I)^-1 · (−t).
+    px = (-(d - 1.0) * e + c * f) / det
+    py = (b * e - (a - 1.0) * f) / det
+    return px, py
+
+
 # ---------------------------------------------------------------------------
 # Group handling
 # ---------------------------------------------------------------------------
@@ -165,7 +204,16 @@ def convert_g(elem: ET.Element, ctx: ConvertContext) -> ShapeResult | None:
     # rotates around the group's bounding-box centre. Skip the child
     # translation here and apply pivot-centre compensation to ``a:off``
     # below instead.
-    rotate_pivot = _extract_rotate_pivot(transform) if not matrix_supported else None
+    # Resolve the rotation pivot for the off-compensation path. A bare
+    # ``rotate(...)`` is read directly; a rotation wrapped in translates
+    # (``translate rotate translate``) is recovered from the composed matrix
+    # as its rigid fixed point. Either way the children stay at their
+    # un-rotated coordinates and the grpSp carries ``rot`` about this pivot.
+    rotate_pivot = None
+    if not matrix_supported:
+        rotate_pivot = _extract_rotate_pivot(transform)
+        if rotate_pivot is None:
+            rotate_pivot = _matrix_rotation_pivot(transform)
     if matrix_supported:
         child_ctx = ctx.child(
             0, 0, 1.0, 1.0,
@@ -195,8 +243,12 @@ def convert_g(elem: ET.Element, ctx: ConvertContext) -> ShapeResult | None:
 
     # Single-child non-semantic groups are flattened to reduce nesting. Top-level
     # semantic groups are preserved so animations target the group, not its
-    # individual child shapes.
-    if len(child_results) == 1 and not should_animate_group:
+    # individual child shapes. A group whose rotation can only live on the
+    # wrapper grpSp (scalar-converter children — rect/path/text — that cannot
+    # absorb a matrix themselves) must NOT be flattened: dropping the wrapper
+    # would discard ``rot`` and leave the child un-rotated.
+    carries_wrapper_rotation = (not matrix_supported) and abs(angle_deg) > 1e-9
+    if len(child_results) == 1 and not should_animate_group and not carries_wrapper_rotation:
         return child_results[0]
 
     # Multiple children, or a top-level semantic one-child group: wrap in
