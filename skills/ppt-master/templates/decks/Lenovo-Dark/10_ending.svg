@@ -47,6 +47,4 @@
   </g>
   <text x="170" y="685" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="13.33">2026 Lenovo Internal. All rights reserved.</text>
 
-  <!-- Bottom-right: page number (white on dark) -->
-  <text x="1090" y="688" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="13.33">{{PAGE_NUM}}</text>
 </svg>

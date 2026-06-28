@@ -46,7 +46,7 @@
     The mark itself: 6 white "L-e-n-o-v-o" letterforms on a red panel.
     Rotated -90° so it reads bottom→top on the right edge.
   -->
-  <g transform="translate(1210 360) rotate(-90) translate(-102 -34)">
+  <g transform="translate(1246 360) rotate(-90) translate(-102 -34)">
     <g transform="scale(2.5)">
       <rect x="0" y="0" width="81.6" height="27.22" fill="#E1251B"/>
       <path d="M 17.06 17.15 L 10.53 17.15 L 10.53 6.20 L 7.62 6.20 L 7.62 19.79 L 17.06 19.79 L 17.06 17.15 Z" fill="#FFFFFF"/>

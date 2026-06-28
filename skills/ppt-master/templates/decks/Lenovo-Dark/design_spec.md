@@ -40,7 +40,7 @@ placeholders:
   07_photo_statement: [IMAGE, STATEMENT_LINE_1, STATEMENT_LINE_2, STATEMENT_LINE_3, PAGE_NUM]
   08_big_idea: [BIG_IDEA_LINE_1, BIG_IDEA_LINE_2, SUPPORTING_TEXT, PAGE_NUM]
   09_blank: [PAGE_NUM]
-  10_ending: [PAGE_NUM]
+  10_ending: []
 fixed_pages:
   - role: ending
     file: 10_ending.svg
