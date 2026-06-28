@@ -7,6 +7,26 @@ summary: Lenovo-branded enterprise decks, product launches (ThinkPad / IdeaPad /
 canvas_format: ppt169
 page_count: 12
 primary_color: "#E1251B"
+contract:
+  bound_by: "SKILL.md Free Design Is Opt-In hard rule"
+  default_invocation: "python scripts/project_manager.py init <name> --format ppt169"
+  applies_via_default_template: lenovo-light
+  required_spec_lock_section: page_layouts
+  required_page_layouts_entries:
+    - P01: 01_cover
+    - P02: 02_toc
+    - P03: 03_chapter
+    - P04: 04a_content_one_col
+    - P05: 04b_content_two_col
+    - P06: 04c_content_three_col
+    - P07: 04d_content_three_deep
+    - P08: 05_section_title
+    - P09: 06_image_text
+    - P10: 07_photo_statement
+    - P11: 08_big_idea
+    - P12: 09_blank
+  free_design_opt_in: "Pass --template free-design to skip template inheritance. Writes .free_design marker; spec_lock.page_layouts may remain empty."
+  verification_script: "python scripts/validate_project.py <project_path>"
 placeholders:
   01_cover: [TITLE_LINE_1, TITLE_LINE_2, TITLE_LINE_3, SUBTITLE, PAGE_NUM]
   02_toc: [TOC_TITLE, ITEM_1_TITLE, ITEM_1_DESC, ITEM_2_TITLE, ITEM_2_DESC, ITEM_3_TITLE, ITEM_3_DESC, ITEM_4_TITLE, ITEM_4_DESC, PAGE_NUM]
@@ -26,6 +46,10 @@ fixed_pages:
     file: 10_ending.svg
     count_toward_page_count: false
     reason: "Lenovo thanks page — appended verbatim after the user-authored deck, original file untouched and no slots filled in"
+persistent_chrome:
+  markers: lenovo-footer-mark
+  exempt_pages: [P07]
+  note: "Recurring footer (red Lenovo mark + copyright + page number) repeats on every page. Strategist copies this into spec_lock.md `## persistent_chrome`; Executor reproduces the `lenovo-footer-mark` group verbatim per §1.2. P07 (04d_content_three_deep, full-bleed color columns) is exempt — white page number only, no footer mark. The exempt P-key tracks the project page index that uses the 04d layout; remap if the outline reorders."
 ---
 
 ## Selection Guidance
@@ -110,7 +134,7 @@ For Dark theme overrides see `Lenovo-Dark/design_spec.md` §VII. Brand red, seco
 
 ### Decorative DNA
 
-- **Recurring footer**: small red Lenovo mark (~80×27) bottom-left, copyright text "2026 Lenovo Internal. All rights reserved.", page number bottom-right.
+- **Recurring footer**: small red Lenovo mark (~80×27) bottom-left, copyright text "2026 Lenovo Internal. All rights reserved.", page number bottom-right. **Locked chrome** — carried by the `<g id="lenovo-footer-mark">` group in every page-type SVG; declared in the frontmatter `persistent_chrome` block and copied into `spec_lock.md`. The Executor reproduces it verbatim on every page except the full-bleed `04d_content_three_deep` (white page number only), and `svg_quality_checker.py` errors if a non-exempt page drops it.
 - **Plum title typography**: title color `#4D144A` on cover / TOC / content (white) variants; "thanks." on the ending.
 - **Arial typography**: a single typeface family for both title and body, with weight contrast 700 / 400 — no decorative display fonts.
 - **Right-edge rotated logo**: vertical red Lenovo wordmark on cover and ending, anchored to the right edge.

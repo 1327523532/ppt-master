@@ -44,7 +44,22 @@ except ImportError:
 TOOLS_DIR = Path(__file__).resolve().parent
 SKILL_DIR = TOOLS_DIR.parent
 REPO_ROOT = SKILL_DIR.parent.parent
+SKILL_TEMPLATES_DIR = SKILL_DIR / "templates"
+DECKS_DIR = SKILL_TEMPLATES_DIR / "decks"
+BRANDS_DIR = SKILL_TEMPLATES_DIR / "brands"
 SOURCE_DIRNAME = "sources"
+
+# Default template applied by `init` when user does not specify --template.
+# See SKILL.md "Free Design Is Opt-In" hard rule — this is the only auto-applied
+# template; all other paths require an explicit user decision.
+DEFAULT_DECK_TEMPLATE = "lenovo-light"
+DEFAULT_BRAND_TEMPLATE = "lenovo"
+
+# Marker files written into <project>/ to track template opt-in state.
+# `.template_applied` = default or user-specified template was applied.
+# `.free_design`      = user explicitly opted into free design (no template).
+TEMPLATE_APPLIED_MARKER = ".template_applied"
+FREE_DESIGN_MARKER = ".free_design"
 TEXT_SOURCE_SUFFIXES = {".md", ".markdown", ".txt"}
 TABLE_TEXT_SUFFIXES = {".csv", ".tsv"}
 PDF_SUFFIXES = {".pdf"}
@@ -122,7 +137,22 @@ class ProjectManager:
         project_name: str,
         canvas_format: str = "ppt169",
         base_dir: str | None = None,
+        template: str = DEFAULT_DECK_TEMPLATE,
+        brand: str = DEFAULT_BRAND_TEMPLATE,
     ) -> str:
+        """Create a new project directory.
+
+        Per SKILL.md "Free Design Is Opt-In" hard rule, this method always
+        applies a template unless ``template="free-design"`` is passed
+        explicitly. The default is ``lenovo-light`` + ``lenovo`` brand; both
+        files are copied into ``<project>/templates/`` and a
+        ``.template_applied`` marker is written so downstream validation
+        can require ``page_layouts`` in ``spec_lock.md``.
+
+        To produce a free-design deck, pass ``template="free-design"`` — a
+        ``.free_design`` marker is written and ``<project>/templates/`` stays
+        empty.
+        """
         base_path = Path(base_dir) if base_dir else self.base_dir
 
         normalized_format = normalize_canvas_format(canvas_format)
@@ -154,20 +184,28 @@ class ProjectManager:
         ):
             (project_path / rel_path).mkdir(parents=True, exist_ok=True)
 
+        # Apply template (or write free-design marker). This is the single
+        # mechanical entry point for the SKILL.md "Free Design Is Opt-In"
+        # rule — no other code path can silently skip template inheritance.
+        applied_template = self._apply_template_choice(
+            project_path, template=template, brand=brand
+        )
+
         canvas_info = self.CANVAS_FORMATS[normalized_format]
         readme_path = project_path / "README.md"
         readme_path.write_text(
             (
                 f"# {project_name}\n\n"
                 f"- Canvas format: {normalized_format}\n"
-                f"- Created: {date_str}\n\n"
+                f"- Created: {date_str}\n"
+                f"- Template mode: {applied_template}\n\n"
                 "## Directories\n\n"
                 "- `svg_output/`: raw SVG output\n"
                 "- `svg_final/`: finalized SVG output\n"
                 "- `images/`: runtime image pool; converter assets keep their original short filenames when possible\n"
                 "- `icons/`: project icon set — selected library icons copied in (via icon_sync.py) plus any custom icons you add; embedded from here at export\n"
                 "- `notes/`: speaker notes\n"
-                "- `templates/`: project templates\n"
+                "- `templates/`: project templates (populated by `init` unless `--template free-design`)\n"
                 "- `live_preview/`: browser preview runtime files and history (lock.json, server.log, edits.jsonl, annotations.jsonl)\n"
                 "- `sources/`: source materials and normalized markdown\n"
                 "- `analysis/`: machine-extracted intermediate analysis (PPTX intake, image_analysis.csv) — the pipeline's canonical must-read source/asset facts\n"
@@ -180,6 +218,68 @@ class ProjectManager:
         print(f"Project created: {project_path}")
         print(f"Canvas: {canvas_info['name']} ({canvas_info['dimensions']})")
         return str(project_path)
+
+    def _apply_template_choice(
+        self,
+        project_path: Path,
+        template: str,
+        brand: str,
+    ) -> str:
+        """Apply the chosen template or write a free-design marker.
+
+        Returns a human-readable string for the README / CLI log describing
+        which mode the project is in.
+        """
+        # Strip any prior marker (e.g. on re-init).
+        for marker in (TEMPLATE_APPLIED_MARKER, FREE_DESIGN_MARKER):
+            existing = project_path / marker
+            if existing.exists():
+                existing.unlink()
+
+        if template.lower() in {"free-design", "free_design", "freedesign"}:
+            # Explicit opt-in to free design. NO template files copied.
+            (project_path / FREE_DESIGN_MARKER).write_text(
+                "User explicitly opted into free design at project creation.\n"
+                "spec_lock.md page_layouts may remain empty; downstream checks\n"
+                "must NOT treat empty page_layouts as a contract violation.\n",
+                encoding="utf-8",
+            )
+            return "free-design (no template applied)"
+
+        # Default path: copy deck + brand into project templates/.
+        deck_src = DECKS_DIR / template
+        if not deck_src.is_dir():
+            available = ", ".join(
+                sorted(p.name for p in DECKS_DIR.iterdir() if p.is_dir())
+            ) if DECKS_DIR.is_dir() else "(none — templates/decks missing)"
+            raise ValueError(
+                f"Unknown deck template: {template!r} "
+                f"(available: {available}). "
+                f"Use --template free-design to skip template inheritance."
+            )
+
+        brand_src = BRANDS_DIR / brand
+        if brand_src.is_dir():
+            self._copy_or_move_tree(brand_src, project_path / "templates" / "brands" / brand, move=False)
+        else:
+            # Brand is optional — log but do not block deck application.
+            print(f"[warn] brand not found: {brand_src} — deck applied without brand identity")
+
+        self._copy_or_move_tree(deck_src, project_path / "templates" / "decks" / template, move=False)
+
+        (project_path / TEMPLATE_APPLIED_MARKER).write_text(
+            (
+                f"Deck: {template}\n"
+                f"Brand: {brand}\n"
+                "spec_lock.md MUST have non-empty page_layouts mapping each\n"
+                "project page (P01, P02, ...) to a template SVG basename\n"
+                "in templates/decks/{template}/. Empty page_layouts is a\n"
+                "contract violation when this marker is present.\n"
+            ).format(template=template),
+            encoding="utf-8",
+        )
+
+        return f"deck={template} + brand={brand}"
 
     def _source_dir(self, project_path: Path) -> Path:
         sources_dir = project_path / SOURCE_DIRNAME
@@ -878,6 +978,24 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("project_name", help="Project name")
     init.add_argument("--format", default="ppt169", help="Canvas format (default: ppt169)")
     init.add_argument("--dir", default=None, help="Base directory for the project")
+    init.add_argument(
+        "--template",
+        default=DEFAULT_DECK_TEMPLATE,
+        help=(
+            "Deck template to copy into <project>/templates/decks/. "
+            "Default: lenovo-light (per SKILL.md 'Free Design Is Opt-In' hard rule). "
+            "Pass 'free-design' to explicitly opt out of template inheritance "
+            "(writes a .free_design marker; spec_lock.page_layouts may remain empty)."
+        ),
+    )
+    init.add_argument(
+        "--brand",
+        default=DEFAULT_BRAND_TEMPLATE,
+        help=(
+            "Brand identity preset copied into <project>/templates/brands/. "
+            "Default: lenovo. Has no effect when --template free-design."
+        ),
+    )
 
     import_sources = subparsers.add_parser(
         "import-sources",
@@ -909,12 +1027,20 @@ def main(argv: list[str] | None = None) -> int:
                 args.project_name,
                 args.format,
                 base_dir=args.dir,
+                template=args.template,
+                brand=args.brand,
             )
             print(f"[OK] Project initialized: {project_path}")
             print("Next:")
             print("1. Put source files into sources/ (or use import-sources)")
             print("2. Save your design spec to the project root")
             print("3. Generate SVG files into svg_output/")
+            template_mode = (
+                "free-design (no template applied)"
+                if (Path(project_path) / FREE_DESIGN_MARKER).exists()
+                else "default template applied (see templates/)"
+            )
+            print(f"4. Template mode: {template_mode}")
             return 0
 
         if args.command == "import-sources":

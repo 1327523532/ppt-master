@@ -148,6 +148,19 @@
 >
 > **Strategist source**: copy from `design_spec.md §VII Visualization Reference List` — only the rows whose `reference template path` points to a `templates/charts/` file. Pages marked `no-template-match` in §VII MUST NOT appear here.
 
+## persistent_chrome
+- markers: lenovo-footer-mark
+- exempt_pages: P07
+
+> Persistent **page furniture** — footer brand mark / copyright line / page number / running header — that a **deck template** repeats on every page. Lift it from the deck `design_spec.md §VI` ("Decorative DNA / Recurring footer") into this lock so it survives context compression and the per-page re-read (§2.1). Colors and fonts are already locked this way; chrome was the gap that let middle pages silently lose the footer.
+>
+> - `markers` — comma-separated list of literal strings that MUST appear on **every non-exempt** generated page. Use the stable SVG group `id` the template carries (e.g. `lenovo-footer-mark`), **not** visible copy (which the Executor rewrites per page). All listed markers must be present on each non-exempt page (AND); declare a single marker for the common one-footer case.
+> - `exempt_pages` — comma-separated `P<NN>` keys (matching `§IX` / `page_rhythm`) for pages whose layout legitimately omits the chrome — full-bleed color-column or full-photo pages (e.g. Lenovo `04d_content_three_deep`, which carries only a white page number, no footer mark). Omit the row when no page is exempt.
+>
+> **Executor contract** (executor-base.md §1.2): the marker block is reproduced **verbatim** on every non-exempt page regardless of `page_rhythm` — it is locked chrome, not free-design content. **Validation**: `svg_quality_checker.py` raises an error (non-zero exit, blocks Step 7) when a non-exempt page is missing a declared marker.
+>
+> **Whole section omitted** → no persistent-chrome enforcement (free-design decks and templates without recurring furniture). On the default Lenovo-Light path this section MUST be present with `markers: lenovo-footer-mark`. **Source**: the deck `design_spec.md` frontmatter `persistent_chrome:` block (when present) names the marker id and exempt pages — copy it here verbatim.
+
 ## forbidden
 - Mixing icon libraries
 - rgba()

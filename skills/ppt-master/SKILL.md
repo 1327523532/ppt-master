@@ -28,6 +28,49 @@ description: >
 > 8. **SPEC_LOCK RE-READ PER PAGE** — Before generating each SVG page, Executor MUST `read_file <project_path>/spec_lock.md`. All colors / fonts / icons / images MUST come from this file — no values from memory or invented on the fly. Executor MUST also look up the current page's `page_rhythm` (`anchor` / `dense` / `breathing`), `page_layouts` (which template SVG to inherit, if any), and `page_charts` (which chart template to adapt, if any). Empty / absent entries are intentional Strategist signals — see executor-base.md §2.1. This rule exists to resist context-compression drift on long decks and to break the uniform "every page is a card grid" default
 > 9. **SVG MUST BE HAND-WRITTEN, NOT SCRIPT-GENERATED** — Every SVG page is written by the main agent directly, one page at a time (see rules 6 and 7). Writing or running a Python / Node / shell script that produces the SVG files in batch — looping over pages, templating from data, or emitting them via a generator — is FORBIDDEN, including under "save tokens", "quick draft", or "user is in a hurry" pretexts. The script-generation path was tried on a feature branch and abandoned: cross-page visual consistency depends on per-page authoring with full upstream context, which a generator script cannot reproduce
 
+> [!CAUTION]
+> ## 🚫 Free Design Is Opt-In (HARD RULE — never default)
+>
+> **A deck is NEVER generated in free-design mode unless the user explicitly opts in at project creation.**
+>
+> **What this means mechanically:**
+>
+> 1. **Project creation** — `python scripts/project_manager.py init <name> --format <format>` defaults `--template lenovo-light`. This copies `templates/decks/Lenovo-Light/*` + `templates/brands/lenovo/*` into `<project>/templates/` and writes a `.template_applied` marker. The only way to skip template inheritance is `init ... --template free-design`, which writes `.free_design` instead and is the **sole** path to free-design output.
+> 2. **Spec lock** — When `.template_applied` exists, `<project>/spec_lock.md` MUST have a non-empty `page_layouts` section mapping every page to a template SVG basename. Empty `page_layouts` in this state is a **contract violation**, not an opt-in to free design. The validator (`scripts/validate_project.py`) emits an `ERROR` that blocks subsequent steps.
+> 3. **Execution** — Executor MUST refuse to start SVG generation when `<project>/templates/` is non-empty but `page_layouts` is empty AND no `.free_design` marker exists. Failure mode is `ERROR`, never silent free-design fallback.
+> 4. **Why this rule exists** — The previous prose directive ("Default — Lenovo brand + Lenovo-Light deck") was repeatedly bypassed when AI agents skipped Step 3 and wrote empty `page_layouts`, silently producing free-design decks that lost the template's structure / identity. This rule makes "no template inheritance" require an explicit, auditable user decision.
+>
+> **Author-side guidance**: when authoring `spec_lock.md`, if the user genuinely wants free design (e.g. style-name input that overrides the default), confirm the explicit opt-in before proceeding. If the user picked `visual_style` from the catalog (e.g. `dark-tech`), it does NOT mean free design — `visual_style` is an aesthetic overlay on top of the template's structure; the template's `page_layouts` still applies, only colors / decoration get re-skinned.
+>
+> **Enforcement reference**: see `scripts/validate_project.py` (contract check), `references/executor-base.md §2.1` (generation-time hard rule), and this section (documentation rule).
+
+> [!IMPORTANT]
+> ## 📋 Standalone Workflow Registry & Governance
+>
+> The `ppt-master` skill dispatches into the following standalone workflows. Each has a defined trigger condition; the dispatcher MUST NOT skip a required workflow step or substitute a different path when the trigger condition is met.
+>
+> **Workflow scope:**
+>
+> - `topic-research` — User provides only a topic and no source files.
+> - `template-fill` — Fill a native PPTX template with source material.
+> - `beautify` — Improve layout of an existing PPTX while preserving original text.
+> - `create-template` — Create standalone layout templates.
+> - `create-brand` — Create brand-only template presets.
+> - `resume-execute` — Resume execution from a previous Phase A session.
+> - `verify-charts` — Validate chart positioning after SVG generation when charts are present.
+> - `customize-animations` — Customize PPTX animations only when explicitly requested.
+> - `live-preview` — Provide browser-based preview during generation or when requested.
+> - `visual-review` — Run visual self-check by default unless the user opts out before Step 7.
+> - `html-layout-check` — Run mandatory DOM geometry checks before visual review; failures block Step 7.
+>
+> **Cross-cutting contracts (apply to every workflow above):**
+>
+> - **Free Design Is Opt-In** (see hard rule above) — every workflow that produces PPTX output is bound by the same template-inheritance contract. `init --template <deck>` is the default; free design requires explicit `init --template free-design` (writes `.free_design` marker). Workflows MUST NOT silently bypass template inheritance.
+> - **Serial execution** — within any chosen workflow, internal steps run in order. Workflows do not skip their own internal gates.
+> - **`spec_lock.md` is canonical** — every workflow reads `<project>/spec_lock.md` before any per-page action; values outside the lock are not invented.
+>
+> **Mapping to source files:** each standalone workflow lives in `workflows/<name>.md` and is the single source of truth for that workflow's internal steps. The list above is the registry; the per-workflow files own the detail.
+
 > [!IMPORTANT]
 > ## 🌐 Language & Communication Rule
 >

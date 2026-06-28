@@ -7,6 +7,26 @@ summary: Dark variant of the Lenovo replica deck — for keynote / evening-launc
 canvas_format: ppt169
 page_count: 12
 primary_color: "#E1251B"
+contract:
+  bound_by: "SKILL.md Free Design Is Opt-In hard rule"
+  default_invocation: "python scripts/project_manager.py init <name> --format ppt169 --template lenovo-dark"
+  applies_via_default_template: lenovo-dark
+  required_spec_lock_section: page_layouts
+  required_page_layouts_entries:
+    - P01: 01_cover
+    - P02: 02_toc
+    - P03: 03_chapter
+    - P04: 04a_content_one_col
+    - P05: 04b_content_two_col
+    - P06: 04c_content_three_col
+    - P07: 04d_content_three_deep
+    - P08: 05_section_title
+    - P09: 06_image_text
+    - P10: 07_photo_statement
+    - P11: 08_big_idea
+    - P12: 09_blank
+  free_design_opt_in: "Pass --template free-design to skip template inheritance. Writes .free_design marker; spec_lock.page_layouts may remain empty."
+  verification_script: "python scripts/validate_project.py <project_path>"
 placeholders:
   01_cover: [TITLE_LINE_1, TITLE_LINE_2, TITLE_LINE_3, SUBTITLE, PAGE_NUM]
   02_toc: [TOC_TITLE, ITEM_1_TITLE, ITEM_1_DESC, ITEM_2_TITLE, ITEM_2_DESC, ITEM_3_TITLE, ITEM_3_DESC, ITEM_4_TITLE, ITEM_4_DESC, PAGE_NUM]

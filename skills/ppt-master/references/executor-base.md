@@ -79,6 +79,18 @@ When the project's chosen template is a `mirror` template (`design_spec.md` fron
 | Ending | `04_ending.svg` | Inherit background, thank-you message position, contact info layout |
 | TOC | `02_toc.svg` | **Optional**: Inherit TOC title, list styles |
 
+### 1.2 Persistent chrome — locked page furniture (HARD rule)
+
+Deck templates (Lenovo-Light and any `kind: deck`) repeat **page furniture** on every page — a footer brand mark, copyright line, page number, sometimes a running header. On the **non-mirror** path the Executor re-authors each page's content area ("structure, not skin"), and this chrome is easy to drop on middle content pages: the cover (an `anchor` page followed near-verbatim) and the appended fixed ending keep theirs, so the loss surfaces as "footer present on the first and last page, missing in the middle". That is a correctness failure, not a style choice.
+
+**Rule**: when `spec_lock.md` has a `## persistent_chrome` section, every marker listed under `markers` MUST be reproduced **verbatim** — same SVG `id`, geometry, and fill, plus the page-number text element — on **every page except those listed in `exempt_pages`**. This holds regardless of the page's `page_rhythm` (`anchor` / `dense` / `breathing`): chrome is locked furniture, never free-design content, and `breathing` does **not** license dropping it.
+
+- Copy the marker group (e.g. `<g id="lenovo-footer-mark">…</g>`) and the page-number text from the page's `page_layouts` template SVG into the generated page unchanged; substitute only the live page number for `{{PAGE_NUM}}`.
+- `exempt_pages` are the full-bleed layouts whose design intentionally omits the footer (e.g. Lenovo `04d_content_three_deep` — white page number only, no footer mark). Do not add the footer to an exempt page, and do not drop it from a non-exempt one.
+- If `persistent_chrome` is absent, there is no chrome to enforce (free-design or furniture-less template) — generate normally.
+
+**Validation**: `svg_quality_checker.py` treats a non-exempt page missing a declared marker as an **error** (non-zero exit) — the same gate that blocks Step 7 for banned features and viewBox drift.
+
 ### Page-Template Mapping Declaration (Required Output)
 
 Before generating each page, output which template is used:
@@ -101,7 +113,7 @@ Before the first SVG page, output a confirmation listing: canvas dimensions, bod
 
 > Long decks drift off the declared palette/icons mid-deck due to context compression. `spec_lock.md` is the canonical execution reference — re-read it per page to bypass model memory.
 
-**Hard rule**: Before generating **each** SVG page, `read_file <project_path>/spec_lock.md`. Use only values from this file, not from memory. If context was auto-compacted, also `read_file <project_path>/design_spec.md` for the current page's §IX brief.
+**Hard rule**: Before generating **each** SVG page, `read_file <project_path>/spec_lock.md`. Use only values from this file, not from memory. If context was auto-compacted, also `read_file <project_path>/design_spec.md` for the current page's §IX brief. On each page also honor the `## persistent_chrome` section (§1.2): unless the page is in `exempt_pages`, reproduce every `markers` block verbatim — this is the per-page guard that stops the footer / page-number drift on long decks.
 
 **Per-block expression**: render each `design_spec.md §IX Content` block in its written texture — a full-sentence block as wrapped prose, a fragment/label block as bullets/keywords. **Never split a full-sentence block into a bullet list** — splitting loses the information that the block was continuous reasoning, not a set of parallel points; not because a bullet lays out easier, and not because an inherited template slot is shaped as a list. If a block carries no clear texture, infer the mode from its wording and the page layout.
 
@@ -112,6 +124,26 @@ Before the first SVG page, output a confirmation listing: canvas dimensions, bod
 > Note: block-level phrasing, applied *within* the page's `page_rhythm` density (below), not against it.
 
 **If `spec_lock.md` is missing**: emit `warning: spec_lock.md missing — generating without execution lock` once, then proceed using `design_spec.md` values. Expected only for legacy projects; new projects MUST have it (see [strategist.md](strategist.md) §6 step 4).
+
+**Template-contract pre-flight (HARD ERROR — see SKILL.md "Free Design Is Opt-In")**:
+
+Before generating any SVG, Executor MUST run `python3 scripts/validate_project.py <project_path>` and refuse to start if the validator returns exit code `1`. The validator checks:
+
+| State | Behavior |
+|---|---|
+| `.template_applied` marker + populated `templates/decks/<deck>/` + non-empty `page_layouts` | PASS — proceed normally |
+| `.template_applied` marker + empty `templates/decks/<deck>/` | **ERROR** — template files missing, re-run `init` or copy manually |
+| `.template_applied` marker + empty `spec_lock.page_layouts` | **ERROR** — contract violation, populate `page_layouts` or re-init with `--template free-design` |
+| `.free_design` marker + empty `templates/` | PASS — proceed with full free design |
+| `.free_design` marker + populated `templates/` | WARN — marker wins (free design), leftover SVGs are inert |
+| Both markers | **ERROR** — re-init with a single `--template` value |
+| No marker + empty `templates/` | WARN — project predates the rule; consider re-init with explicit opt-in |
+
+The Executor MUST NOT silently fall back to free design when the validator emits an error. Refusing to start is the only correct response. Remediation options to surface to the user:
+
+1. Populate `<project>/spec_lock.md` `## page_layouts` with `P<NN>: <basename>` entries for every page
+2. Or: delete `<project>/templates/` contents AND write a `.free_design` marker to explicitly opt out
+3. Or: re-run `python3 scripts/project_manager.py init` (delete old project directory first)
 
 **Forbidden — values outside the lock**:
 

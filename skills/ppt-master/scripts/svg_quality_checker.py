@@ -217,6 +217,11 @@ class SVGQualityChecker:
         # severity is 'error' or 'warning'. Printed in print_summary.
         self._template_issues: List[Tuple[str, str, str]] = []
         self._animation_issues: List[Tuple[str, str]] = []
+        # Persistent-chrome aggregation (populated by check_directory in
+        # project mode). Each entry is (severity, message); errors mirror into
+        # the global summary in _print_chrome_summary so the exit gate honors
+        # a dropped footer / page-number on a non-exempt page.
+        self._chrome_issues: List[Tuple[str, str]] = []
 
     def check_file(self, svg_file: str, expected_format: str = None) -> Dict:
         """
@@ -1123,6 +1128,7 @@ class SVGQualityChecker:
             self._check_template_contract(dir_path, svg_files)
         elif dir_path.is_dir():
             self._check_animation_config_contract(dir_path)
+            self._check_persistent_chrome_contract(svg_files)
 
         return self.results
 
@@ -1140,6 +1146,70 @@ class SVGQualityChecker:
             return
         for warning in _validate_animation_config(project_path, config):
             self._animation_issues.append(('warning', warning))
+
+    @staticmethod
+    def _page_key_for_stem(stem: str):
+        """Map an SVG filename stem to its `P<NN>` page key, or None.
+
+        Project SVGs are named `<NN>_<page_name>.svg` (executor-base.md naming
+        convention), so the leading zero-padded number is the page index.
+        `07_photo_statement` -> `P07`; a stem with no leading number -> None
+        (such a page simply cannot be matched to `exempt_pages`).
+        """
+        m = re.match(r'^(\d{1,3})(?:_|$)', stem)
+        if not m:
+            return None
+        return f"P{int(m.group(1)):02d}"
+
+    def _check_persistent_chrome_contract(self, svg_files: List[Path]) -> None:
+        """Enforce spec_lock.md `## persistent_chrome` on generated pages.
+
+        Deck templates repeat page furniture (footer brand mark, copyright,
+        page number) on every page. On the non-mirror path the Executor
+        re-authors each page and may drop that chrome on middle content pages
+        (the cover and the appended fixed ending keep theirs). When the lock
+        declares `persistent_chrome`, every `markers` string MUST appear on
+        every page except those in `exempt_pages`; a non-exempt page missing a
+        marker is a hard error (non-zero exit, blocks Step 7).
+
+        Silently no-ops when the lock is absent or carries no
+        `persistent_chrome` section — free-design decks and furniture-less
+        templates are unaffected.
+        """
+        if not svg_files:
+            return
+        lock = self._get_spec_lock(svg_files[0])
+        if not lock:
+            return
+        chrome = lock.get('persistent_chrome')
+        if not chrome:
+            return
+
+        markers = [m.strip() for m in chrome.get('markers', '').split(',') if m.strip()]
+        if not markers:
+            return
+        exempt = {p.strip().upper()
+                  for p in chrome.get('exempt_pages', '').split(',') if p.strip()}
+
+        for svg_file in svg_files:
+            page_key = self._page_key_for_stem(svg_file.stem)
+            if page_key is not None and page_key in exempt:
+                continue
+            try:
+                content = svg_file.read_text(encoding='utf-8')
+            except OSError:
+                continue
+            missing = [m for m in markers if m not in content]
+            if missing:
+                shown = ', '.join(missing)
+                self._chrome_issues.append((
+                    'error',
+                    f"{svg_file.name}: missing persistent_chrome marker(s) [{shown}] "
+                    f"— reproduce the locked footer / page-number block verbatim "
+                    f"(executor-base.md §1.2), or add this page to "
+                    f"spec_lock.md persistent_chrome.exempt_pages if it is a "
+                    f"full-bleed layout.",
+                ))
 
     def _check_template_contract(self, dir_path: Path,
                                  svg_files: List[Path]) -> None:
@@ -1429,6 +1499,9 @@ class SVGQualityChecker:
         # Animation config aggregation.
         self._print_animation_summary()
 
+        # Persistent-chrome aggregation (dropped footer / page number).
+        self._print_chrome_summary()
+
         # Fix suggestions
         if self.summary['errors'] > 0 or self.summary['warnings'] > 0:
             print(f"\n[TIP] Common fixes:")
@@ -1453,6 +1526,29 @@ class SVGQualityChecker:
         for _severity, msg in errors:
             print(f"  [ERROR] {msg}")
         for _severity, msg in warnings:
+            print(f"  [WARN] {msg}")
+
+    def _print_chrome_summary(self):
+        """Print persistent-chrome violations and mirror errors into summary.
+
+        Errors land under the global ``errors`` count so ``main``'s exit gate
+        (and any downstream "0 errors" check before Step 7) treats a dropped
+        footer / page number on a non-exempt page as blocking.
+        """
+        if not self._chrome_issues:
+            return
+
+        errors = [item for item in self._chrome_issues if item[0] == 'error']
+        warnings = [item for item in self._chrome_issues if item[0] == 'warning']
+        self.summary['errors'] += len(errors)
+        self.summary['warnings'] += len(warnings)
+        for severity, _msg in self._chrome_issues:
+            self.issue_types[f'persistent_chrome_{severity}'] += 1
+
+        print("\n[CHROME] persistent_chrome checks (spec_lock.md)")
+        for _sev, msg in errors:
+            print(f"  [ERROR] {msg}")
+        for _sev, msg in warnings:
             print(f"  [WARN] {msg}")
 
     def _print_template_summary(self):
