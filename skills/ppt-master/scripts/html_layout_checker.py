@@ -106,6 +106,11 @@ CANVAS_TOLERANCE_PX = 2.0
 # below this fraction of the smaller text box, an intersection reads as line-gap
 # slack between adjacent lines, not a real overlap (design §2 default 0.15).
 TEXT_OVERLAP_MIN_RATIO = 0.15
+# same-<g> pairs are only treated as one logical block (tspan continuation / same
+# paragraph) when their horizontal projections overlap at least this much. Real
+# wrapped lines share a column (ratio ~1.0); side-by-side table cells wrapped in
+# one row <g> barely overlap (ratio ~0.2) and must NOT be exempted.
+SAME_BLOCK_X_OVERLAP_RATIO = 0.6
 
 # ── Container overflow (TEXT_CONTAINER_OVERFLOW) ────────────────────────────
 # only filled shapes can hold text — a <line>/<text> is never a container.
@@ -441,6 +446,14 @@ def _rect_intersection_area(a: dict, b: dict) -> float:
     return ix * iy
 
 
+def _x_overlap_ratio(a: dict, b: dict) -> float:
+    """Horizontal projection overlap as a fraction of the narrower box. ~1.0 for
+    wrapped lines sharing a column, near 0 for side-by-side cells. Width 0 → 0."""
+    ix = max(0.0, min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"]))
+    narrow = min(a["w"], b["w"])
+    return ix / narrow if narrow > 0 else 0.0
+
+
 def _text_exceeds(text_b: dict, cont_b: dict, tol: float, font_size: float | None) -> bool:
     """True if the text box pokes past the container box beyond tolerance.
     Horizontal tolerance is widened to one font-size (CJK trailing-glyph advance,
@@ -589,7 +602,9 @@ def check_images(elements: list[dict]) -> list[dict]:
 
 def check_text_overlap(elements: list[dict]) -> list[dict]:
     """Pairwise <text> bbox intersection, excluding same-logical-block pairs:
-    (a) same direct parent <g> (tspan continuation / same paragraph);
+    (a) same direct parent <g> AND horizontally aligned (x-overlap ratio ≥
+        SAME_BLOCK_X_OVERLAP_RATIO) — tspan continuation / wrapped lines in one
+        column. Side-by-side cells sharing a row <g> are NOT exempted;
     (b) intersection < TEXT_OVERLAP_MIN_RATIO of the smaller box (line-gap slack);
     (c) either element carries data-check-ignore.
     Only cross-block pairs over the ratio are reported as TEXT_OVERLAP."""
@@ -600,7 +615,11 @@ def check_text_overlap(elements: list[dict]) -> list[dict]:
             a, b = texts[i], texts[j]
             if a.get("dataIgnore") or b.get("dataIgnore"):
                 continue
-            if a.get("groupId") is not None and a.get("groupId") == b.get("groupId"):
+            if (
+                a.get("groupId") is not None
+                and a.get("groupId") == b.get("groupId")
+                and _x_overlap_ratio(a["bbox"], b["bbox"]) >= SAME_BLOCK_X_OVERLAP_RATIO
+            ):
                 continue
             inter = _rect_intersection_area(a["bbox"], b["bbox"])
             if inter <= 0:
