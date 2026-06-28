@@ -32,6 +32,7 @@
 [Executor] 执行师
     ├── 视觉构建：连续生成所有 SVG 页面 → svg_output/
     ├── [Quality Check] svg_quality_checker.py（强制通过，0 错误）
+    ├── [几何下限] html_layout_checker.py（强制、不可跳过——读真实 DOM bbox，非 0 退出码阻断导出）
     └── 讲稿生成：完整讲稿 → notes/total.md
     ↓
 [图表校准（可选）] → verify-charts 工作流（含数据图表的幻灯片在此步骤校准坐标）

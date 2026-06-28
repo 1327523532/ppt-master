@@ -32,6 +32,7 @@ User Input (PDF/DOCX/XLSX/URL/Markdown)
 [Executor]
     ├── Visual construction: generate all SVG pages → svg_output/
     ├── [Quality Check] svg_quality_checker.py (mandatory — must pass with 0 errors)
+    ├── [Geometry Floor] html_layout_checker.py (mandatory, non-skippable — real DOM bbox, non-zero exit blocks export)
     └── Notes generation: complete speaker notes → notes/total.md
     ↓
 [Chart calibration (optional)] → verify-charts workflow (for decks containing data charts)
