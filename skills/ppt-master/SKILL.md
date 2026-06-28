@@ -57,6 +57,7 @@ description: >
 | `${SKILL_DIR}/scripts/latex_render.py` | LaTeX formula rendering (manifest-driven PNG assets) |
 | `${SKILL_DIR}/scripts/image_gen.py` | AI image generation (multi-provider) |
 | `${SKILL_DIR}/scripts/svg_quality_checker.py` | SVG quality check |
+| `${SKILL_DIR}/scripts/html_layout_checker.py` | DOM geometry floor check — renders each page headless and reads real bbox to catch out-of-bounds / text overlap / container overflow / broken images |
 | `${SKILL_DIR}/scripts/total_md_split.py` | Speaker notes splitting |
 | `${SKILL_DIR}/scripts/finalize_svg.py` | SVG post-processing (unified entry) |
 | `${SKILL_DIR}/scripts/svg_to_pptx.py` | Export to PPTX |
@@ -89,6 +90,7 @@ For complete tool documentation, see `${SKILL_DIR}/scripts/README.md`.
 | `customize-animations` | `workflows/customize-animations.md` | Object-level PPTX animation customization — run only when the user explicitly asks to tune animation order/effects/timing |
 | `live-preview` | `workflows/live-preview.md` | Browser-based live preview — auto-started during generation and re-enterable any time the user mentions "live preview", "preview", "看效果", or wants to click/select a slide element |
 | `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — runs by default between Executor and post-processing for every deck. The user may opt out in chat before Step 7 (e.g. "跳过视觉自检" / "skip visual review"); no other signal changes this default. |
+| `html-layout-check` | `workflows/html-layout-check.md` | Deterministic DOM geometry floor — renders each page headless and reads real bbox to catch out-of-bounds / text overlap / container overflow / broken images. Runs after `svg_quality_checker.py`, before `visual-review`; non-skippable, a non-zero exit blocks Step 7. |
 
 ### PPTX Route Boundary
 
@@ -547,6 +549,15 @@ python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
 - `warning` entries (low-res image, non-PPT-safe font tail, etc.): fix when straightforward, otherwise acknowledge and release.
 - Run against `svg_output/` (not after `finalize_svg.py` — finalize rewrites SVG and masks violations).
 
+**Geometry Floor Gate (Mandatory, non-skippable)** — immediately after `svg_quality_checker.py` passes, run the DOM geometry check. Unlike the static checker above (regex on SVG source) and the subjective visual-review below (VLM, user-opt-out-able), this layer renders each page in headless Chromium and reads **real DOM geometry** to catch out-of-bounds elements, text overlap, text overflowing its container, broken images, and (opt-in) element collisions. It is the deterministic floor that holds even when visual-review is skipped — there is **no opt-out**.
+```bash
+python3 ${SKILL_DIR}/scripts/html_layout_checker.py <project_path>
+```
+- The checker **auto-starts and auto-reaps** its own live-preview server (reusing an already-running one without killing it) — do NOT start a server manually for it.
+- Exit code is the gate: **5** (render/probe failed) and **4** (geometry `error`, e.g. text overflows its card, element out of bounds) MUST be fixed before Step 7 — return to Visual Construction, regenerate the offending page, re-run. Exit **0** passes.
+- `warning` entries (ambiguous collisions, missing container metadata) print to stdout and the JSON report but do not block by default; pass `--fail-on-warning` to make them blocking (exit 4). Full per-page detail is always in `<project_path>/.layout_check/layout_report.json`.
+- Like the static checker, run against `svg_output/` (before `finalize_svg.py`).
+
 **Logic Construction Phase**: generate speaker notes → `<project_path>/notes/total.md`
 
 **✅ Checkpoint — Confirm all SVGs and notes are fully generated and quality-checked. Proceed directly to Step 7 post-processing**:
@@ -555,6 +566,7 @@ python3 ${SKILL_DIR}/scripts/svg_quality_checker.py <project_path>
 - [x] Live preview started and kept available at the reported URL
 - [x] All SVGs generated to svg_output/
 - [x] svg_quality_checker.py passed (0 errors)
+- [x] html_layout_checker.py passed (exit 0; no geometry errors)
 - [x] Speaker notes generated at notes/total.md
 ```
 

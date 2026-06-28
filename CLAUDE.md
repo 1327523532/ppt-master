@@ -86,6 +86,8 @@ python3 skills/ppt-master/scripts/image_gen.py --render-md <project_path>/images
 python3 skills/ppt-master/scripts/image_gen.py "prompt" --aspect_ratio 16:9 --image_size 1K -o <project_path>/images
 python3 skills/ppt-master/scripts/svg_editor/server.py <project_path> --live --daemon
 python3 skills/ppt-master/scripts/svg_quality_checker.py <project_path>
+# Geometry floor check — runs after svg_quality_checker, before visual-review; auto-starts the live-preview server, non-zero exit blocks export
+python3 skills/ppt-master/scripts/html_layout_checker.py <project_path>
 python3 skills/ppt-master/scripts/animation_config.py scaffold <project_path>  # optional, only for custom object-level animation
 python3 skills/ppt-master/scripts/animation_config.py validate <project_path>  # optional, before re-export
 
