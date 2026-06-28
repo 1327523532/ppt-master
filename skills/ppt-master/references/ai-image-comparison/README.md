@@ -19,6 +19,8 @@ Each subdirectory contains:
 - `_manifest.json` — generation manifest (status=Pending), runnable via `image_gen.py --manifest`
 - `<dimension>.png` — the generated image for each rendering / palette / type
 
+> Note: the `rendering/` sample PNGs are **not** distributed in the repo (removed to save space). The manifests are kept — regenerate the images with the `image_gen.py --manifest` command below before using `rendering/` as a side-by-side gallery.
+
 > `page_role: hero_page` images don't pick an `image_type` — they use the four composition primitives in [`image-generator.md`](../image-generator.md) §4.1 directly (single-subject / portrait / typographic / atmospheric). The 11 types in `type/` are for local infographic blocks only.
 
 ## Why these baselines
