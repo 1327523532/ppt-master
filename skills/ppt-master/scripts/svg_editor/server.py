@@ -119,8 +119,17 @@ def _cache_put(cache: dict, lock: threading.Lock, path: str, mtime: float, value
 # (imported above as _process_alive / _read_lock / _claim_lock / _release_lock).
 
 
-def _inline_icons(content: str) -> tuple[str, list[dict]]:
+def _inline_icons(
+    content: str,
+    icons_dir: Path,
+    fallback_dir: Path | None = None,
+) -> tuple[str, list[dict]]:
     """Replace <use data-icon="..."/> with rendered <g> for browser preview.
+
+    Icons resolve project-first: ``icons_dir`` is the deck's own icons/ where
+    on-demand icons are fetched, ``fallback_dir`` is the skill-global library.
+    Mirrors the export-side resolution in finalize_svg, minus remote fetch
+    (preview is a read-only hot path; fetching is left to export).
 
     Returns (rewritten_content, warnings). Each warning is
     ``{"icon": <name>, "reason": <str>}`` so the frontend can surface
@@ -140,7 +149,7 @@ def _inline_icons(content: str) -> tuple[str, list[dict]]:
             if not icon_name:
                 warnings.append({'icon': '', 'reason': 'missing data-icon attribute'})
                 continue
-            icon_path, _ = resolve_icon_path(icon_name, _ICONS_DIR)
+            icon_path, _ = resolve_icon_path(icon_name, icons_dir, fallback_dir=fallback_dir)
             color = str(attrs.get('fill', '#000000'))
             elements, style, base_size = extract_paths_from_icon(icon_path, color)
         except Exception as exc:
@@ -561,7 +570,9 @@ def create_app(
                         tag = tag.split('}', 1)[1]
                     id_to_tag[eid] = tag
             content = ET.tostring(root, encoding='unicode', xml_declaration=False)
-            content, warnings = _inline_icons(content)
+            project_icons_dir = app.config['PROJECT_PATH'] / 'icons'
+            global_icons_dir = _ICONS_DIR if _ICONS_DIR.is_dir() else None
+            content, warnings = _inline_icons(content, project_icons_dir, global_icons_dir)
             if not pending_edits:
                 _cache_put(
                     _SLIDE_CACHE, _SLIDE_CACHE_LOCK, path_str, mtime,
