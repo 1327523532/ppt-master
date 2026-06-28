@@ -111,10 +111,36 @@ TEXT_OVERLAP_MIN_RATIO = 0.15
 # wrapped lines share a column (ratio ~1.0); side-by-side table cells wrapped in
 # one row <g> barely overlap (ratio ~0.2) and must NOT be exempted.
 SAME_BLOCK_X_OVERLAP_RATIO = 0.6
+# horizontal penetration floor (px) for a same-line collision. The area-ratio
+# test above only models vertically-stacked lines (wide, thin overlap); two long
+# boxes colliding side-by-side make a thin, *tall* overlap whose area ratio is
+# just as small, so they slip through. When the vertical overlap is near-total
+# (same baseline, TEXT_OVERLAP_SAMELINE_Y_RATIO) yet the boxes still bite into
+# each other horizontally past this floor, it is a real same-line collision. Set
+# above a full-width trailing-punctuation phantom advance (~1em) so a CJK comma
+# kissing the next column does not false-fire; a genuine collision bites deeper.
+TEXT_OVERLAP_SAMELINE_X_PX = 8.0
+# how much of the shorter box's height must overlap to call two boxes "same line".
+TEXT_OVERLAP_SAMELINE_Y_RATIO = 0.5
+# the same-line branch ignores a pair when one side is a lone oversized glyph
+# (a decorative quote mark, drop cap, or bullet set far larger than the body it
+# sits behind) — that is intentional ornament layered under text, not a line
+# collision. Triggered only when one box is a single character AND its font size
+# is at least this multiple of the other's. The vertically-stacked area test is
+# unaffected; a same-size single glyph colliding mid-line still fires.
+TEXT_OVERLAP_DECOR_FONT_RATIO = 2.0
 
 # ── Container overflow (TEXT_CONTAINER_OVERFLOW) ────────────────────────────
 # only filled shapes can hold text — a <line>/<text> is never a container.
 CONTAINER_TAGS = ("rect", "path", "circle", "ellipse")
+# tags trusted as a *heuristically-inferred* text container. Only <rect> — its
+# bbox is the actual content box. A <circle>/<ellipse> bbox over-claims its empty
+# corners and a <path> bbox is arbitrary geometry (donut arc, decorative swoosh),
+# so centered/overlaid text reads as "overflowing" a box it was never seated in.
+# Those false positives dominated circle/path inference in practice. Authors who
+# genuinely want a non-rect shape checked still opt in explicitly via
+# data-check-within, which bypasses this set.
+HEURISTIC_CONTAINER_TAGS = ("rect",)
 # R4 sanity bound: a candidate larger than this fraction of the canvas is a
 # full-bleed background, not a card — skip it, or the page's white <rect> would
 # "contain" every text and nothing could ever overflow.
@@ -125,8 +151,17 @@ CONTAINER_MAX_AREA_RATIO = 0.85
 # tens of px on its short side.
 CONTAINER_MIN_SIDE = 20.0
 # slack before a text edge past its container counts as overflow (absorbs card
-# padding rounded into the box, mirrors CANVAS_TOLERANCE_PX).
+# padding rounded into the box, mirrors CANVAS_TOLERANCE_PX). Used for the
+# vertical edges and the left edge.
 CONTAINER_OVERFLOW_TOL = 2.0
+# horizontal noise floor (px) for the right edge of a line NOT ending in wide
+# punctuation. getBBox's advance box carries a few px of inter-glyph tracking
+# past the visible ink even when the text fits, more so on longer Latin lines, so
+# a flush line can report a right edge ~4px over. Set just above that (measured:
+# fitting lines peak ~+4px, real clips start ~+5.7px) so true clipping still
+# fires while sub-glyph noise does not. Lines ending in wide punctuation use the
+# larger font-factor tolerance instead.
+CONTAINER_OVERFLOW_H_NOISE = 5.0
 # horizontal slack as a multiple of font size. getBBox returns a text's layout
 # advance box, and a CJK full-width trailing punctuation (，：。) advances ~1em
 # past its visible ink, plus inter-glyph tracking — so a line ending flush inside
@@ -273,6 +308,22 @@ async (cfg) => {
     if (tag === 'text') {
       const fs = parseFloat(getComputedStyle(el).fontSize);
       rec.fontSize = isFinite(fs) ? fs : null;
+      // does the line end in wide CJK *punctuation*? Only then does getBBox's
+      // advance box overshoot the visible ink by ~1em — full-width punctuation
+      // (。，、：；！？）」 …) has narrow ink but a full-width advance cell. A
+      // trailing CJK *ideograph* fills its cell (phantom ~0) and a Latin glyph
+      // has no phantom, so neither inherits that forgiveness.
+      const t = (el.textContent || '').replace(/\s+$/, '');
+      const last = t.length ? t[t.length - 1] : '';
+      rec.endPunct = /[、。，．・…‥！？；：）〕】」』》〉”’｡｣､·]/.test(last)
+        || /[！-／：-＠［-｀｛-･]/.test(last);
+      // trimmed character count — a lone oversized glyph (decorative quote, drop
+      // cap, bullet) is length 1 and must not read as a text block in collision.
+      rec.charLen = t.trim().length;
+      // text-anchor decides how the line is positioned: 'middle'/'end' lines are
+      // placed by their center/right, so an edge spilling past a heuristic
+      // container reads as a centering artifact, not a left-pinned clip.
+      rec.anchor = getComputedStyle(el).textAnchor || 'start';
     }
     if (tag === 'image') {
       const href = (el.href && el.href.baseVal) || el.getAttribute('href')
@@ -446,6 +497,16 @@ def _rect_intersection_area(a: dict, b: dict) -> float:
     return ix * iy
 
 
+def _rect_overlap_extents(a: dict, b: dict) -> tuple[float, float]:
+    """The (x, y) overlap extents of two boxes. Either is 0 when they don't
+    intersect on that axis. Used to measure penetration depth per-axis, which the
+    area alone cannot express — a thin-but-tall side-by-side collision and a
+    wide-but-thin line-gap touch can share the same tiny area."""
+    ix = max(0.0, min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"]))
+    iy = max(0.0, min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"]))
+    return ix, iy
+
+
 def _x_overlap_ratio(a: dict, b: dict) -> float:
     """Horizontal projection overlap as a fraction of the narrower box. ~1.0 for
     wrapped lines sharing a column, near 0 for side-by-side cells. Width 0 → 0."""
@@ -454,17 +515,22 @@ def _x_overlap_ratio(a: dict, b: dict) -> float:
     return ix / narrow if narrow > 0 else 0.0
 
 
-def _text_exceeds(text_b: dict, cont_b: dict, tol: float, font_size: float | None) -> bool:
+def _text_exceeds(text_b: dict, cont_b: dict, tol: float, font_size: float | None,
+                  end_punct: bool = False) -> bool:
     """True if the text box pokes past the container box beyond tolerance.
-    Horizontal tolerance is widened to one font-size (CJK trailing-glyph advance,
-    see CONTAINER_OVERFLOW_FONT_FACTOR); vertical stays at the tight tol."""
-    h_tol = tol
-    if font_size:
-        h_tol = max(tol, font_size * CONTAINER_OVERFLOW_FONT_FACTOR)
+    The wide horizontal tolerance (one font-size, CONTAINER_OVERFLOW_FONT_FACTOR)
+    exists only to absorb the full-width-punctuation advance artifact, so it
+    applies to the *right* edge only when the line ends in wide CJK punctuation
+    (end_punct). Otherwise the right edge gets CONTAINER_OVERFLOW_H_NOISE — a few
+    px above inter-glyph tracking noise but below a real clip. Left and vertical
+    edges always use the tight tol."""
+    h_tol_right = CONTAINER_OVERFLOW_H_NOISE
+    if end_punct and font_size:
+        h_tol_right = max(h_tol_right, font_size * CONTAINER_OVERFLOW_FONT_FACTOR)
     return (
-        text_b["x"] < cont_b["x"] - h_tol
+        text_b["x"] < cont_b["x"] - tol
         or text_b["y"] < cont_b["y"] - tol
-        or text_b["x"] + text_b["w"] > cont_b["x"] + cont_b["w"] + h_tol
+        or text_b["x"] + text_b["w"] > cont_b["x"] + cont_b["w"] + h_tol_right
         or text_b["y"] + text_b["h"] > cont_b["y"] + cont_b["h"] + tol
     )
 
@@ -501,7 +567,7 @@ def _infer_container(
     best = None
     best_area = None
     for cand in elements[:text_idx]:
-        if cand["tag"] not in CONTAINER_TAGS:
+        if cand["tag"] not in HEURISTIC_CONTAINER_TAGS:
             continue
         cb = cand.get("bbox")
         if not cb:
@@ -605,9 +671,15 @@ def check_text_overlap(elements: list[dict]) -> list[dict]:
     (a) same direct parent <g> AND horizontally aligned (x-overlap ratio ≥
         SAME_BLOCK_X_OVERLAP_RATIO) — tspan continuation / wrapped lines in one
         column. Side-by-side cells sharing a row <g> are NOT exempted;
-    (b) intersection < TEXT_OVERLAP_MIN_RATIO of the smaller box (line-gap slack);
     (c) either element carries data-check-ignore.
-    Only cross-block pairs over the ratio are reported as TEXT_OVERLAP."""
+    A pair counts as overlapping when EITHER the intersection clears
+    TEXT_OVERLAP_MIN_RATIO of the smaller box (the area test, which models
+    vertically-stacked lines), OR it is a same-line collision: the boxes share a
+    baseline (vertical overlap ≥ TEXT_OVERLAP_SAMELINE_Y_RATIO of the shorter box)
+    and still bite into each other horizontally past TEXT_OVERLAP_SAMELINE_X_PX.
+    The second branch exists because two long side-by-side boxes colliding on one
+    line make a thin, tall intersection whose *area* ratio is as small as a
+    harmless line-gap touch — area alone is blind to it."""
     texts = [e for e in elements if e["tag"] == "text" and e.get("bbox")]
     issues: list[dict] = []
     for i in range(len(texts)):
@@ -625,7 +697,34 @@ def check_text_overlap(elements: list[dict]) -> list[dict]:
             if inter <= 0:
                 continue
             smaller = min(_rect_area(a["bbox"]), _rect_area(b["bbox"]))
-            if smaller <= 0 or inter < smaller * TEXT_OVERLAP_MIN_RATIO:
+            if smaller <= 0:
+                continue
+
+            area_hit = inter >= smaller * TEXT_OVERLAP_MIN_RATIO
+
+            # same-line collision: near-total vertical overlap plus a horizontal
+            # bite the area test cannot see. Discount the left box's full-width
+            # trailing-punctuation phantom advance (~1em) so a CJK comma kissing
+            # the next column is not mistaken for a collision.
+            ix, iy = _rect_overlap_extents(a["bbox"], b["bbox"])
+            shorter_h = min(a["bbox"]["h"], b["bbox"]["h"])
+            same_line = shorter_h > 0 and iy >= shorter_h * TEXT_OVERLAP_SAMELINE_Y_RATIO
+            left = a if a["bbox"]["x"] <= b["bbox"]["x"] else b
+            phantom = (left.get("fontSize") or 0) if left.get("endPunct") else 0.0
+            sameline_hit = same_line and (ix - phantom) >= TEXT_OVERLAP_SAMELINE_X_PX
+
+            # decorative-glyph guard: a lone oversized character (big quote mark,
+            # drop cap, bullet) layered behind a body line is intentional ornament,
+            # not a same-line collision. Only the same-line branch is gated — the
+            # area test still catches a true mid-line pile-up.
+            if sameline_hit:
+                fa, fb = a.get("fontSize") or 0, b.get("fontSize") or 0
+                a_decor = a.get("charLen", 99) <= 1 and fa >= fb * TEXT_OVERLAP_DECOR_FONT_RATIO
+                b_decor = b.get("charLen", 99) <= 1 and fb >= fa * TEXT_OVERLAP_DECOR_FONT_RATIO
+                if a_decor or b_decor:
+                    sameline_hit = False
+
+            if not (area_hit or sameline_hit):
                 continue
             issues.append({
                 "code": "TEXT_OVERLAP",
@@ -660,8 +759,21 @@ def check_container_overflow(elements: list[dict], canvas: dict) -> list[dict]:
             source = "heuristic"
         if not container or not container.get("bbox"):
             continue
-        if not _text_exceeds(el["bbox"], container["bbox"], CONTAINER_OVERFLOW_TOL, el.get("fontSize")):
+        if not _text_exceeds(el["bbox"], container["bbox"], CONTAINER_OVERFLOW_TOL,
+                             el.get("fontSize"), el.get("endPunct", False)):
             continue
+        # misattribution guard (heuristic only): a card the text overflows on BOTH
+        # horizontal sides is not actually holding it — that is centered text over
+        # a small decoration (icon/dot/badge) that _infer_container mis-picked, not
+        # a clip. A real clip keeps its left padding and spills one side. A declared
+        # data-check-within container is author truth and is never second-guessed.
+        if source == "heuristic":
+            tb, cb = el["bbox"], container["bbox"]
+            tol = CONTAINER_OVERFLOW_TOL
+            over_left = tb["x"] < cb["x"] - tol
+            over_right = tb["x"] + tb["w"] > cb["x"] + cb["w"] + tol
+            if over_left and over_right:
+                continue
         issues.append({
             "code": "TEXT_CONTAINER_OVERFLOW",
             "severity": "error",
