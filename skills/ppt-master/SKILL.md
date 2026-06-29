@@ -47,7 +47,7 @@ description: >
 > [!IMPORTANT]
 > ## 📋 Standalone Workflow Registry & Governance
 >
-> The `ppt-master` skill dispatches into the following standalone workflows. Each has a defined trigger condition; the dispatcher MUST NOT skip a required workflow step or substitute a different path when the trigger condition is met.
+> The `ppt-master` skill dispatches into the following standalone workflows. Each has a defined trigger condition — most are conditional (fire only when their trigger is met), but some (e.g. `html-layout-check`) are unconditional mandatory gates that always run at their pipeline position. The dispatcher MUST NOT skip a required workflow step or substitute a different path when the trigger condition is met.
 >
 > **Workflow scope:**
 >
@@ -60,8 +60,8 @@ description: >
 > - `verify-charts` — Validate chart positioning after SVG generation when charts are present.
 > - `customize-animations` — Customize PPTX animations only when explicitly requested.
 > - `live-preview` — Provide browser-based preview during generation or when requested.
-> - `visual-review` — Run visual self-check by default unless the user opts out before Step 7.
 > - `html-layout-check` — Run mandatory DOM geometry checks before visual review; failures block Step 7.
+> - `visual-review` — Run visual self-check by default unless the user opts out before Step 7.
 >
 > **Cross-cutting contracts (apply to every workflow above):**
 >
@@ -133,7 +133,6 @@ For complete tool documentation, see `${SKILL_DIR}/scripts/README.md`.
 | `customize-animations` | `workflows/customize-animations.md` | Object-level PPTX animation customization — run only when the user explicitly asks to tune animation order/effects/timing |
 | `live-preview` | `workflows/live-preview.md` | Browser-based live preview — auto-started during generation and re-enterable any time the user mentions "live preview", "preview", "看效果", or wants to click/select a slide element |
 | `visual-review` | `workflows/visual-review.md` | Per-page rubric-based visual self-check — runs by default between Executor and post-processing for every deck. The user may opt out in chat before Step 7 (e.g. "跳过视觉自检" / "skip visual review"); no other signal changes this default. |
-| `html-layout-check` | `workflows/html-layout-check.md` | Deterministic DOM geometry floor — renders each page headless and reads real bbox to catch out-of-bounds / text overlap / container overflow / broken images. Runs after `svg_quality_checker.py`, before `visual-review`; non-skippable, a non-zero exit blocks Step 7. |
 
 ### PPTX Route Boundary
 
@@ -601,6 +600,7 @@ python3 ${SKILL_DIR}/scripts/html_layout_checker.py <project_path>
 - Exit code is the gate: **5** (render/probe failed) and **4** (geometry `error`, e.g. text overflows its card, element out of bounds) MUST be fixed before Step 7 — return to Visual Construction, regenerate the offending page, re-run. Exit **0** passes.
 - `warning` entries (ambiguous collisions, missing container metadata) print to stdout and the JSON report but do not block by default; pass `--fail-on-warning` to make them blocking (exit 4). Full per-page detail is always in `<project_path>/.layout_check/layout_report.json`.
 - Like the static checker, run against `svg_output/` (before `finalize_svg.py`).
+- Full workflow detail: see [`workflows/html-layout-check.md`](workflows/html-layout-check.md).
 
 **Logic Construction Phase**: generate speaker notes → `<project_path>/notes/total.md`
 
